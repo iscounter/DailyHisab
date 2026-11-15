@@ -1,0 +1,24 @@
+# Flutter/Dart
+apps/mobile/.dart_tool/
+apps/mobile/.packages
+apps/mobile/.pub-cache/
+apps/mobile/build/
+apps/mobile/.flutter-plugins
+apps/mobile/.flutter-plugins-dependencies
+apps/mobile/ios/Pods/
+apps/mobile/android/.gradle/
+apps/mobile/android/app/build/
+apps/mobile/*.iml
+*.g.dart
+*.freezed.dart
+pubspec.lock
+
+# Rust
+rust/dailyhisab_core/target/
+Cargo.lock
+
+# IDE
+.vscode/
+.idea/
+*.swp
+.DS_Store

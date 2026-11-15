@@ -1,0 +1,29 @@
+name: Rust CI
+
+on:
+  push:
+    branches: ["**"]
+    paths:
+      - "rust/**"
+      - ".github/workflows/rust_ci.yml"
+  pull_request:
+    paths:
+      - "rust/**"
+      - ".github/workflows/rust_ci.yml"
+
+jobs:
+  rust:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: rust/dailyhisab_core
+    steps:
+      - uses: actions/checkout@v4
+      - name: Rust toolchain
+        uses: dtolnay/rust-toolchain@stable
+      - name: Format check
+        run: cargo fmt --check
+      - name: Clippy
+        run: cargo clippy --all-targets --all-features -- -D warnings
+      - name: Test
+        run: cargo test
