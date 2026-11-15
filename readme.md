@@ -1325,3 +1325,431 @@ A future Rust backend should provide cloud synchronization when the product actu
 Start with Android, establish a strong architecture, and expand platform by platform.
 
 Build once, share intelligently, test everywhere, and optimize only when needed.
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+বুঝেছি\! এখন থেকে প্রজেক্টের সঠিক নাম হবে DailyHisab — `Daily Shipe` বা `Daily Tips` নয়।
+
+আমরা এটিকে একটি professional, modern, offline-first Daily Hisab / Personal Expense & Income Management App হিসেবে ডিজাইন করব।
+
+Sleek: AI Mobile App Designer | Create App Mockups in Minutes
+
+[sleek.design](<https://sleek.design/?utm_source=chatgpt.com>)
+
+# DailyHisab
+
+Smart Personal Finance & Expense Manager
+
+Flutter + DartRust CoreOffline-firstAndroid first
+
+## 1. DailyHisab-এর technology stack
+
+| Layer | Technology |
+| --- | --- |
+| UI | Flutter |
+| Main language | Dart |
+| Native core | Rust |
+| Rust integration | flutter\_rust\_bridge |
+| State management | Riverpod |
+| Navigation | GoRouter |
+| Local database | SQLite + Drift |
+| Charts | fl\_chart |
+| Models | Freezed |
+| Serialization | JSON |
+| Backend | None initially |
+| Future backend | Rust + Axum |
+| Cloud database | PostgreSQL |
+
+## 2. DailyHisab-এর মূল ফিচার
+
+Reve 2.0 — 4K AI Image Model & Free Online Generator | Tryonr
+
+Dashboard
+
+Total balance, income, expenses and monthly summary.
+
+Budget Tracker Mobile App by Product SAAS for Cansaas on Dribbble
+
+Transactions
+
+Income and expense tracking.
+
+今年こそお金をしっかり管理したい！ 初心者でも続けやすいアプリ「らくな家計簿」 | PINTO | スタジオアリス
+
+Analytics
+
+Monthly reports, charts and spending analysis.
+
+2025 年記帳理財 App 推薦：PTT 網友也推的 13 款記帳軟體 - 蘋果仁 - 果仁 iPhone/iOS/好物推薦科技媒體
+
+Budgets
+
+Monthly budgets and spending limits.
+
+Additional features:
+
+- Multiple accounts and wallets
+- Category management
+- Daily, weekly and monthly reports
+- Savings goals
+- Recurring transactions
+- Debt and loan tracking
+- Search and filters
+- PDF/CSV export
+- Bengali and English languages
+- Dark and light themes
+- PIN / biometric app lock
+- Local notifications
+- Offline data backup and restore
+
+## 3. Project folder structure
+
+text
+
+```text
+DailyHisab/
+│
+├── apps/
+│   └── mobile/
+│       ├── android/
+│       ├── ios/
+│       ├── windows/
+│       ├── macos/
+│       ├── linux/
+│       │
+│       ├── lib/
+│       │   ├── main.dart
+│       │   ├── app/
+│       │   ├── core/
+│       │   ├── routing/
+│       │   │
+│       │   └── features/
+│       │       ├── dashboard/
+│       │       ├── transactions/
+│       │       ├── accounts/
+│       │       ├── categories/
+│       │       ├── budgets/
+│       │       ├── analytics/
+│       │       ├── savings/
+│       │       ├── debts/
+│       │       ├── reports/
+│       │       └── settings/
+│       │
+│       └── pubspec.yaml
+│
+├── rust/
+│   └── dailyhisab_core/
+│       ├── Cargo.toml
+│       └── src/
+│           ├── lib.rs
+│           ├── finance/
+│           ├── calculations/
+│           ├── reports/
+│           └── errors/
+│
+├── packages/
+│   ├── design_system/
+│   ├── shared_models/
+│   └── local_database/
+│
+├── docs/
+│   ├── ARCHITECTURE.md
+│   ├── DATABASE.md
+│   ├── SECURITY.md
+│   └── DEPLOYMENT.md
+│
+├── scripts/
+├── .github/
+├── README.md
+└── PROJECT_ARCHITECTURE.md
+```
+
+## 4. Database design
+
+প্রথম সংস্করণে SQLite + Drift ব্যবহার করব।
+
+| Table | Purpose |
+| --- | --- |
+| accounts | Bank, cash, wallet |
+| transactions | Income and expense |
+| categories | Expense and income categories |
+| budgets | Monthly budgets |
+| savings\_goals | Savings targets |
+| debts | Borrowed and lent money |
+| recurring\_transactions | Repeated payments |
+| app\_settings | App preferences |
+
+গুরুত্বপূর্ণ: Financial calculations-এর জন্য `double` ব্যবহার করব না। টাকা integer minor units-এ সংরক্ষণ করব, যেমন BDT 100.50 = 10050 poisha। এতে floating-point rounding সমস্যা এড়ানো যাবে।
+
+## 5. Rust কোথায় ব্যবহার হবে?
+
+Rust দিয়ে করা যেতে পারে:
+
+- Financial calculations
+- Complex reporting
+- Transaction aggregation
+- Advanced filtering
+- Data validation
+- Import/export processing
+
+Dart দিয়ে করা হবে:
+
+- UI
+- Navigation
+- Database access
+- Notifications
+- App state
+- Platform integration
+
+প্রথমে Rust core আলাদা test করব, তারপর Flutter-এর সঙ্গে যুক্ত করব।
+
+## 6. Platform roadmap
+
+1. Android — প্রথম production release।
+2. iOS — একই Flutter application।
+3. Windows — Desktop application।
+4. macOS — Desktop application।
+5. Linux — Desktop application।
+6. Web — আলাদা WASM integration পরিকল্পনা।
+
+## 7. DailyHisab-এর README.md
+
+প্রজেক্টের নাম এবং architecture অনুযায়ী নিচের README ব্যবহার করতে পারো।
+
+Writing
+
+# 💰 DailyHisab
+
+> A modern, offline-first, cross-platform personal finance and expense management application built with Flutter, Dart and Rust.
+
+\!Flutter \!Dart \!Rust \!SQLite \!Architecture
+
+## About
+
+DailyHisab is a modern personal finance management application designed to help users track their income, expenses, budgets, savings and financial activities.
+
+The application follows an offline-first architecture and initially requires no cloud backend.
+
+It is designed for Android first, with future support for iOS, Windows, macOS and Linux.
+
+## Core Features
+
+- Income and expense tracking
+- Multiple accounts and wallets
+- Custom transaction categories
+- Daily, weekly and monthly analytics
+- Monthly budgets
+- Savings goals
+- Debt and loan management
+- Recurring transactions
+- Transaction search and filtering
+- PDF and CSV reports
+- Bengali and English localization
+- Dark and light themes
+- Offline-first storage
+- Data backup and restore
+- PIN and biometric protection
+
+## Technology Stack
+
+| Layer | Technology |
+| --- | --- |
+| UI | Flutter |
+| Programming language | Dart |
+| Native core | Rust |
+| Rust integration | flutter\_rust\_bridge |
+| State management | Riverpod |
+| Navigation | GoRouter |
+| Database | SQLite |
+| Database toolkit | Drift |
+| Charts | fl\_chart |
+| Models | Freezed |
+| Serialization | JSON |
+| Initial backend | None |
+| Future backend | Rust + Axum |
+| Future cloud database | PostgreSQL |
+
+## Architecture
+
+text
+
+```text
+Flutter UI
+    |
+    v
+Dart Application Layer
+    |
+    +------> Riverpod
+    |
+    +------> Repository Layer
+                 |
+          +------+------+
+          |             |
+          v             v
+       SQLite        Rust Core
+       / Drift       / FFI Bridge
+          |             |
+          +------+------+
+                 |
+          Application Data
+```
+
+## Project Structure
+
+text
+
+```text
+DailyHisab/
+├── apps/
+│   └── mobile/
+│       ├── android/
+│       ├── ios/
+│       ├── windows/
+│       ├── macos/
+│       ├── linux/
+│       ├── lib/
+│       │   ├── app/
+│       │   ├── core/
+│       │   ├── routing/
+│       │   └── features/
+│       └── pubspec.yaml
+│
+├── rust/
+│   └── dailyhisab_core/
+│       ├── src/
+│       └── Cargo.toml
+│
+├── packages/
+│   ├── design_system/
+│   ├── shared_models/
+│   └── local_database/
+│
+├── docs/
+├── scripts/
+├── .github/
+├── README.md
+└── PROJECT_ARCHITECTURE.md
+```
+
+## Development Principles
+
+1. Offline-first functionality.
+2. Flutter-first development.
+3. Rust for shared native core functionality.
+4. SQLite as the local source of truth.
+5. Feature-first Clean Architecture.
+6. No unnecessary dependencies.
+7. No paid APIs or mandatory subscriptions.
+8. No backend requirement for the initial release.
+9. Financial calculations must avoid floating-point errors.
+10. All important features must have automated tests.
+
+## Financial Data Rules
+
+- Store monetary amounts as integer minor units.
+- Store currency codes explicitly.
+- Use database transactions for financial operations.
+- Preserve transaction history.
+- Validate all monetary inputs.
+- Never silently modify historical transactions.
+
+## Development Roadmap
+
+- [x]Architecture planning
+- [ ]Flutter project initialization
+- [ ]Design system
+- [ ]Local database
+- [ ]Dashboard
+- [ ]Income and expense tracking
+- [ ]Accounts and categories
+- [ ]Budgets
+- [ ]Analytics
+- [ ]Rust integration
+- [ ]Reports and exports
+- [ ]Security and testing
+- [ ]Android production release
+- [ ]iOS and desktop support
+
+## Platform Support
+
+| Platform | Priority |
+| --- | --- |
+| Android | First |
+| iOS | Second |
+| Windows | Future |
+| macOS | Future |
+| Linux | Future |
+| Web | Optional |
+
+## Future Backend
+
+The first release will not require a backend.
+
+Future cloud synchronization may use:
+
+- Rust
+- Axum
+- PostgreSQL
+- REST API
+- Secure authentication
+
+## License
+
+Choose an appropriate open-source license before publishing the repository.
+
+---
+
+**DailyHisab — Understand Your Money. Manage Your Future.**
+
+## 8. একটি গুরুত্বপূর্ণ সিদ্ধান্ত নেওয়া দরকার
+
+DailyHisab-এর database ও financial architecture চূড়ান্ত করার আগে একটি বিষয় জানতে চাই:
+
+তুমি কোন ধরনের হিসাবের অ্যাপ বানাতে চাও?
+
+১. App-এর মূল ব্যবহার
+
+personal Personal Hisab — নিজের আয়, খরচ, সঞ্চয় ***
+
+Business Hisab — দোকান, বিক্রি, কেনা, লাভ-ক্ষতি ***
+
+Both — Personal + Business হিসাব ***
+
+Family Hisab — পরিবারের একাধিক সদস্যের হিসাব ***
+
+২. প্রধান Currency
+
+BDT — বাংলাদেশি টাকা (৳)
+
+USD — US Dollar ($) 
+
+MULTI Multi-currency ***
+
+৩. Backend
+
+offline Offline only initially
+
+Offline first + future cloud sync
+
+ Confirm DailyHisab Architecture ****
+
+এই সিদ্ধান্তের ভিত্তিতে DailyHisab-এর database schema, transaction engine, হিসাবের নিয়ম এবং সম্পূর্ণ production implementation তৈরি করা যাবে।
