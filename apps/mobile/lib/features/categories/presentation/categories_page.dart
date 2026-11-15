@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../data/app_providers.dart';
-import '../../../data/database_providers.dart';
 import '../../../data/drift/app_database.dart';
 
 class CategoriesPage extends ConsumerWidget {
@@ -53,7 +52,7 @@ class CategoriesPage extends ConsumerWidget {
               TextField(controller: nameCtrl, decoration: const InputDecoration(labelText: 'Name')),
               const SizedBox(height: 12),
               DropdownButtonFormField<TxnType>(
-                value: type,
+                initialValue: type,
                 items: const [
                   DropdownMenuItem(value: TxnType.expense, child: Text('Expense')),
                   DropdownMenuItem(value: TxnType.income, child: Text('Income')),
@@ -77,5 +76,6 @@ class CategoriesPage extends ConsumerWidget {
         ),
       ),
     );
+    nameCtrl.dispose();
   }
 }

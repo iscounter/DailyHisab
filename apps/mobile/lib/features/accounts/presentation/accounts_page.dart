@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../data/app_providers.dart';
-import '../../../data/database_providers.dart';
 import '../../../data/drift/app_database.dart';
 
 class AccountsPage extends ConsumerWidget {
@@ -64,7 +63,7 @@ class AccountsPage extends ConsumerWidget {
               TextField(controller: nameCtrl, decoration: const InputDecoration(labelText: 'Name', hintText: 'e.g. Cash, bKash')),
               const SizedBox(height: 12),
               DropdownButtonFormField<AccountKind>(
-                value: kind,
+                initialValue: kind,
                 decoration: const InputDecoration(labelText: 'Type'),
                 items: AccountKind.values.map((k) => DropdownMenuItem(value: k, child: Text(k.name))).toList(),
                 onChanged: (v) => setS(() => kind = v ?? AccountKind.cash),
@@ -86,5 +85,6 @@ class AccountsPage extends ConsumerWidget {
         ),
       ),
     );
+    nameCtrl.dispose();
   }
 }

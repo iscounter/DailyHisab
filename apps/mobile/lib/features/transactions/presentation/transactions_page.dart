@@ -3,7 +3,6 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../data/app_providers.dart';
 import '../../../data/drift/app_database.dart';
-import '../../../data/database_providers.dart';
 import '../../../core/utils/money.dart';
 
 class TransactionsPage extends ConsumerWidget {
@@ -143,14 +142,14 @@ class _AddTxnSheetState extends ConsumerState<_AddTxnSheet> {
             ),
             const SizedBox(height: 12),
             DropdownButtonFormField<String>(
-              value: _accountId,
+              initialValue: _accountId,
               decoration: const InputDecoration(labelText: 'Account'),
               items: widget.accounts.map((a) => DropdownMenuItem(value: a.id, child: Text(a.name))).toList(),
               onChanged: (v) => setState(() => _accountId = v!),
             ),
             const SizedBox(height: 12),
             DropdownButtonFormField<String>(
-              value: filteredCats.any((c) => c.id == _categoryId) ? _categoryId : (filteredCats.isNotEmpty ? filteredCats.first.id : null),
+              initialValue: filteredCats.any((c) => c.id == _categoryId) ? _categoryId : (filteredCats.isNotEmpty ? filteredCats.first.id : null),
               decoration: const InputDecoration(labelText: 'Category'),
               items: filteredCats.map((c) => DropdownMenuItem(value: c.id, child: Text(c.name))).toList(),
               onChanged: (v) => setState(() => _categoryId = v),

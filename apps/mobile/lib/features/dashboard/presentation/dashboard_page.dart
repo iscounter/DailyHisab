@@ -2,9 +2,9 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
-import '../data/app_providers.dart';
-import '../core/utils/money.dart';
-import '../data/drift/app_database.dart';
+import '../../../data/app_providers.dart';
+import '../../../core/utils/money.dart';
+import '../../../data/drift/app_database.dart';
 
 class DashboardPage extends ConsumerWidget {
   const DashboardPage({super.key});
@@ -94,7 +94,7 @@ class _SummaryCard extends StatelessWidget {
             return Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text('Net this month', style: TextStyle(color: cs.onPrimaryContainer.withOpacity(0.85))),
+                Text('Net this month', style: TextStyle(color: cs.onPrimaryContainer.withValues(alpha: 0.85))),
                 const SizedBox(height: 6),
                 Text(formatBdtMinor(balance), style: Theme.of(context).textTheme.headlineMedium?.copyWith(color: cs.onPrimaryContainer, fontWeight: FontWeight.w700)),
                 const SizedBox(height: 16),
@@ -118,7 +118,7 @@ class _SummaryCard extends StatelessWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text(label, style: TextStyle(color: c.withOpacity(0.75), fontSize: 12)),
+        Text(label, style: TextStyle(color: c.withValues(alpha: 0.75), fontSize: 12)),
         const SizedBox(height: 4),
         Text(formatBdtMinor(v), style: TextStyle(color: c, fontWeight: FontWeight.w600)),
       ],
@@ -138,7 +138,7 @@ class _TxnTile extends ConsumerWidget {
       margin: const EdgeInsets.only(bottom: 8),
       child: ListTile(
         leading: CircleAvatar(
-          backgroundColor: color.withOpacity(0.12),
+          backgroundColor: color.withValues(alpha: 0.12),
           child: Icon(isIncome ? Icons.arrow_downward : Icons.arrow_upward, color: color),
         ),
         title: Text(formatBdtMinor(txn.amountMinor), style: const TextStyle(fontWeight: FontWeight.w600)),
