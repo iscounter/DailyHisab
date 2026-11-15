@@ -26,7 +26,14 @@ class DailyHisabApp extends ConsumerWidget {
             home: Scaffold(body: Center(child: CircularProgressIndicator())),
           ),
           error: (e, _) => MaterialApp(
-            home: Scaffold(body: Center(child: Padding(padding: EdgeInsets.all(16), child: Text('Startup error: $e')))),
+            home: Scaffold(
+              body: Center(
+                child: Padding(
+                  padding: const EdgeInsets.all(16),
+                  child: Text('Startup error: $e'),
+                ),
+              ),
+            ),
           ),
         );
       },

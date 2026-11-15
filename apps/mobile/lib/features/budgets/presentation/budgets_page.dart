@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:drift/drift.dart' hide Column;
 
 import '../../../data/database_providers.dart';
 import '../../../data/drift/app_database.dart';
@@ -30,9 +29,14 @@ class BudgetsPage extends ConsumerWidget {
           if (snap.connectionState == ConnectionState.waiting) {
             return const Center(child: CircularProgressIndicator());
           }
-          final list = snap.data ?? [];
+          final list = snap.data ?? <Budget>[];
           if (list.isEmpty) {
-            return const Center(child: Padding(padding: EdgeInsets.all(24), child: Text('No budgets for this month. Tap + to add.')));
+            return const Center(
+              child: Padding(
+                padding: EdgeInsets.all(24),
+                child: Text('No budgets for this month. Tap + to add.'),
+              ),
+            );
           }
           return ListView.separated(
             padding: const EdgeInsets.all(16),
@@ -45,7 +49,7 @@ class BudgetsPage extends ConsumerWidget {
                   title: Text(b.name),
                   subtitle: Text('Limit ${formatBdtMinor(b.limitMinor)} • ${b.monthYear}'),
                   trailing: IconButton(
-                    icon: const Icon(Icons.delete_outline'),
+                    icon: const Icon(Icons.delete_outline),
                     onPressed: () async {
                       await (db.delete(db.budgets)..where((t) => t.id.equals(b.id))).go();
                     },
@@ -62,40 +66,50 @@ class BudgetsPage extends ConsumerWidget {
   Future<void> _addBudget(BuildContext context, WidgetRef ref, AppDatabase db, int my) async {
     final nameCtrl = TextEditingController(text: 'Monthly budget');
     final limitCtrl = TextEditingController();
-    await showDialog(
+    await showDialog<void>(
       context: context,
-      builder: (ctx) => AlertDialog(
-        title: const Text('Add budget'),
-        content: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            TextField(controller: nameCtrl, decoration: const InputDecoration(labelText: 'Name')),
-            TextField(
-              controller: limitCtrl,
-              keyboardType: const TextInputType.numberWithOptions(decimal: true),
-              decoration: const InputDecoration(labelText: 'Limit (BDT)'),
+      builder: (ctx) {
+        return AlertDialog(
+          title: const Text('Add budget'),
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              TextField(
+                controller: nameCtrl,
+                decoration: const InputDecoration(labelText: 'Name'),
+              ),
+              TextField(
+                controller: limitCtrl,
+                keyboardType: const TextInputType.numberWithOptions(decimal: true),
+                decoration: const InputDecoration(labelText: 'Limit (BDT)'),
+              ),
+            ],
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(ctx),
+              child: const Text('Cancel'),
+            ),
+            FilledButton(
+              onPressed: () async {
+                final v = double.tryParse(limitCtrl.text.trim());
+                if (v == null || v <= 0) return;
+                await db.into(db.budgets).insert(
+                      BudgetsCompanion.insert(
+                        id: DateTime.now().microsecondsSinceEpoch.toString(),
+                        name: nameCtrl.text.trim().isEmpty ? 'Budget' : nameCtrl.text.trim(),
+                        monthYear: my,
+                        limitMinor: (v * 100).round(),
+                        createdAt: DateTime.now(),
+                      ),
+                    );
+                if (ctx.mounted) Navigator.pop(ctx);
+              },
+              child: const Text('Save'),
             ),
           ],
-        ),
-        actions: [
-          TextButton(onPressed: () => Navigator.pop(ctx), child: const Text('Cancel')),
-          FilledButton(
-            onPressed: () async {
-              final v = double.tryParse(limitCtrl.text.trim());
-              if (v == null || v <= 0) return;
-              await db.into(db.budgets).insert(BudgetsCompanion.insert(
-                    id: DateTime.now().microsecondsSinceEpoch.toString(),
-                    name: nameCtrl.text.trim().isEmpty ? 'Budget' : nameCtrl.text.trim(),
-                    monthYear: my,
-                    limitMinor: (v * 100).round(),
-                    createdAt: DateTime.now(),
-                  ));
-              if (ctx.mounted) Navigator.pop(ctx);
-            },
-            child: const Text('Save'),
-          ),
-        ],
-      ),
+        );
+      },
     );
     nameCtrl.dispose();
     limitCtrl.dispose();
