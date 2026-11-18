@@ -68,17 +68,34 @@ class Budgets extends Table {
   Set<Column> get primaryKey => {id};
 }
 
-@DriftDatabase(tables: [Accounts, Categories, Transactions, Budgets])
-class AppDatabase extends _$AppDatabase {
-  AppDatabase() : super(_openConnection());
+class AppSettings extends Table {
+  TextColumn get key => text()();
+  TextColumn get value => text()();
+  DateTimeColumn get updatedAt => dateTime().nullable()();
 
   @override
-  int get schemaVersion => 1;
+  Set<Column> get primaryKey => {key};
+}
+
+@DriftDatabase(tables: [Accounts, Categories, Transactions, Budgets, AppSettings])
+class AppDatabase extends _$AppDatabase {
+  AppDatabase(QueryExecutor e) : super(e);
+
+  /// Production constructor backed by the on-device SQLite file.
+  AppDatabase.forProduction() : this(_openConnection());
+
+  @override
+  int get schemaVersion => 2;
 
   @override
   MigrationStrategy get migration => MigrationStrategy(
         onCreate: (m) async {
           await m.createAll();
+        },
+        onUpgrade: (m, from, to) async {
+          if (from < 2) {
+            await m.createTable(appSettings);
+          }
         },
       );
 }

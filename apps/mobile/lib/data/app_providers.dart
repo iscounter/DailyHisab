@@ -5,6 +5,7 @@ import '../data/database_providers.dart';
 import '../data/repositories/accounts_repository.dart';
 import '../data/repositories/categories_repository.dart';
 import '../data/repositories/transactions_repository.dart';
+import '../data/repositories/app_settings_repository.dart';
 
 final accountsRepositoryProvider = Provider<AccountsRepository>((ref) {
   return AccountsRepository(ref.watch(databaseProvider));
@@ -67,4 +68,53 @@ final monthSpentProvider = FutureProvider<int>((ref) async {
   final repo = ref.watch(transactionsRepositoryProvider);
   final r = currentMonthRange();
   return repo.sumExpenseMinor(r.from, r.to);
+});
+
+final appSettingsRepositoryProvider = Provider<AppSettingsRepository>((ref) {
+  return AppSettingsRepository(ref.watch(databaseProvider));
+});
+
+/// Free-text search query for the transactions list (client-side filter).
+final transactionQueryProvider = StateProvider<String>((ref) => '');
+
+/// Optional transaction type filter for the transactions list.
+final transactionTypeFilterProvider = StateProvider<TxnKind?>((ref) => null);
+
+/// Display currency code (from app_settings, defaults to BDT).
+final currencyCodeProvider = FutureProvider<String>((ref) async {
+  final repo = ref.watch(appSettingsRepositoryProvider);
+  final v = await repo.get('currency_code');
+  return (v == null || v.isEmpty) ? 'BDT' : v;
+});
+
+/// Current-month expenses grouped by category, sorted by amount (desc).
+final monthExpenseByCategoryProvider =
+    FutureProvider<List<({String categoryId, String name, int totalMinor})>>(
+        (ref) async {
+  final txnRepo = ref.watch(transactionsRepositoryProvider);
+  final catRepo = ref.watch(categoriesRepositoryProvider);
+  final all = await txnRepo.getAll();
+  final cats = await catRepo.getAll();
+  final r = currentMonthRange();
+
+  final catName = {for (final c in cats) c.id: c.name};
+  final totals = <String, int>{};
+
+  for (final t in all) {
+    if (t.kind != TxnKind.expense) continue;
+    if (t.occurredAt.isBefore(r.from) || !t.occurredAt.isBefore(r.to)) continue;
+    final key = t.categoryId ?? '__none__';
+    totals[key] = (totals[key] ?? 0) + t.amountMinor;
+  }
+
+  final list = totals.entries.map((e) {
+    return (
+      categoryId: e.key,
+      name: e.key == '__none__' ? 'Uncategorized' : (catName[e.key] ?? 'Uncategorized'),
+      totalMinor: e.value,
+    );
+  }).toList();
+
+  list.sort((a, b) => b.totalMinor.compareTo(a.totalMinor));
+  return list;
 });

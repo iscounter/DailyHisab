@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../../data/app_providers.dart';
 import '../../../data/settings_providers.dart';
 
 class SettingsPage extends ConsumerWidget {
@@ -9,15 +10,16 @@ class SettingsPage extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final mode = ref.watch(themeModeProvider);
+    final currency = ref.watch(currencyCodeProvider).valueOrNull ?? 'BDT';
     return Scaffold(
       appBar: AppBar(title: const Text('Settings')),
       body: ListView(
         padding: const EdgeInsets.all(16),
         children: [
-          const ListTile(
+          ListTile(
             contentPadding: EdgeInsets.zero,
-            title: Text('Currency'),
-            subtitle: Text('BDT (৳) — fixed in v1'),
+            title: const Text('Currency'),
+            subtitle: Text('$currency (৳) — fixed in v1'),
           ),
           const SizedBox(height: 8),
           Text('Theme', style: Theme.of(context).textTheme.titleSmall),

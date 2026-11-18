@@ -13,6 +13,9 @@ class TransactionsPage extends ConsumerWidget {
     final txns = ref.watch(recentTransactionsProvider);
     final accounts = ref.watch(accountsStreamProvider);
     final categories = ref.watch(categoriesStreamProvider);
+    final query = ref.watch(transactionQueryProvider);
+    final kindFilter = ref.watch(transactionTypeFilterProvider);
+    final normalizedQuery = query.trim().toLowerCase();
 
     return Scaffold(
       appBar: AppBar(title: const Text('Transactions')),
@@ -25,54 +28,113 @@ class TransactionsPage extends ConsumerWidget {
         ),
         child: const Icon(Icons.add),
       ),
-      body: txns.when(
-        data: (items) {
-          if (items.isEmpty) return const Center(child: Text('No transactions yet.'));
-          return ListView.separated(
-            padding: const EdgeInsets.all(16),
-            itemCount: items.length,
-            separatorBuilder: (_, __) => const SizedBox(height: 8),
-            itemBuilder: (context, i) {
-              final t = items[i];
-              return Dismissible(
-                key: ValueKey(t.id),
-                direction: DismissDirection.endToStart,
-                background: Container(
-                  alignment: Alignment.centerRight,
-                  padding: const EdgeInsets.only(right: 16),
-                  color: Colors.red.shade700,
-                  child: const Icon(Icons.delete, color: Colors.white),
+      body: Column(
+        children: [
+          Padding(
+            padding: const EdgeInsets.fromLTRB(16, 12, 16, 4),
+            child: TextField(
+              onChanged: (v) => ref.read(transactionQueryProvider.notifier).state = v,
+              decoration: const InputDecoration(
+                hintText: 'Search notes…',
+                prefixIcon: Icon(Icons.search),
+                isDense: true,
+              ),
+            ),
+          ),
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 12),
+            child: Wrap(
+              spacing: 8,
+              children: [
+                FilterChip(
+                  label: const Text('All'),
+                  selected: kindFilter == null,
+                  onSelected: (_) => ref.read(transactionTypeFilterProvider.notifier).state = null,
                 ),
-                onDismissed: (_) async {
-                  await ref.read(transactionsRepositoryProvider).delete(t.id);
-                  ref.invalidate(monthSummaryProvider);
-                  ref.invalidate(totalBalanceProvider);
-                },
-                child: Card(
-                  child: ListTile(
-                    leading: Icon(_iconFor(t.kind), color: _colorFor(t.kind)),
-                    title: Text(formatBdtMinor(t.amountMinor)),
-                    subtitle: Text(
-                      '${_labelFor(context, t)}\n${t.occurredAt.toLocal().toString().split('.').first}',
-                      style: Theme.of(context).textTheme.bodySmall,
-                    ),
-                    isThreeLine: true,
-                    trailing: const Icon(Icons.chevron_right),
-                    onTap: () => _openSheet(
-                      context,
-                      ref,
-                      accounts.valueOrNull ?? [],
-                      categories.valueOrNull ?? [],
-                      existing: t,
-                    ),
-                  ),
+                FilterChip(
+                  label: const Text('Income'),
+                  selected: kindFilter == TxnKind.income,
+                  onSelected: (_) => ref
+                      .read(transactionTypeFilterProvider.notifier)
+                      .state = kindFilter == TxnKind.income ? null : TxnKind.income,
                 ),
-              );
-            },
-          );
-        },
-        loading: () => const Center(child: CircularProgressIndicator()),
-        error: (e, _) => Center(child: Text('Error: $e')),
+                FilterChip(
+                  label: const Text('Expense'),
+                  selected: kindFilter == TxnKind.expense,
+                  onSelected: (_) => ref
+                      .read(transactionTypeFilterProvider.notifier)
+                      .state = kindFilter == TxnKind.expense ? null : TxnKind.expense,
+                ),
+                FilterChip(
+                  label: const Text('Transfer'),
+                  selected: kindFilter == TxnKind.transfer,
+                  onSelected: (_) => ref
+                      .read(transactionTypeFilterProvider.notifier)
+                      .state = kindFilter == TxnKind.transfer ? null : TxnKind.transfer,
+                ),
+              ],
+            ),
+          ),
+          const SizedBox(height: 4),
+          Expanded(
+            child: txns.when(
+              data: (items) {
+                final filtered = items.where((t) {
+                  if (kindFilter != null && t.kind != kindFilter) return false;
+                  if (normalizedQuery.isEmpty) return true;
+                  return t.note.toLowerCase().contains(normalizedQuery);
+                }).toList();
+                if (filtered.isEmpty) {
+                  return const Center(child: Text('No transactions match.'));
+                }
+                return ListView.separated(
+                  padding: const EdgeInsets.all(16),
+                  itemCount: filtered.length,
+                  separatorBuilder: (_, __) => const SizedBox(height: 8),
+                  itemBuilder: (context, i) {
+                    final t = filtered[i];
+                    return Dismissible(
+                      key: ValueKey(t.id),
+                      direction: DismissDirection.endToStart,
+                      background: Container(
+                        alignment: Alignment.centerRight,
+                        padding: const EdgeInsets.only(right: 16),
+                        color: Colors.red.shade700,
+                        child: const Icon(Icons.delete, color: Colors.white),
+                      ),
+                      onDismissed: (_) async {
+                        await ref.read(transactionsRepositoryProvider).delete(t.id);
+                        ref.invalidate(monthSummaryProvider);
+                        ref.invalidate(totalBalanceProvider);
+                      },
+                      child: Card(
+                        child: ListTile(
+                          leading: Icon(_iconFor(t.kind), color: _colorFor(t.kind)),
+                          title: Text(formatBdtMinor(t.amountMinor)),
+                          subtitle: Text(
+                            '${_labelFor(t)}\n${t.occurredAt.toLocal().toString().split('.').first}',
+                            style: Theme.of(context).textTheme.bodySmall,
+                          ),
+                          isThreeLine: true,
+                          trailing: const Icon(Icons.chevron_right),
+                          onTap: () => _openSheet(
+                            context,
+                            ref,
+                            accounts.valueOrNull ?? [],
+                            categories.valueOrNull ?? [],
+                            existing: t,
+                          ),
+                        ),
+                      ),
+                    );
+                  },
+                );
+              },
+              loading: () => const Center(child: CircularProgressIndicator()),
+              error: (e, _) => Center(child: Text('Error: $e')),
+            ),
+          ),
+        ],
       ),
     );
   }
@@ -99,7 +161,7 @@ class TransactionsPage extends ConsumerWidget {
     }
   }
 
-  String _labelFor(BuildContext context, Transaction t) {
+  String _labelFor(Transaction t) {
     switch (t.kind) {
       case TxnKind.income:
         return 'Income';

@@ -18,6 +18,36 @@ class TransactionsRepository {
         .watch();
   }
 
+  /// All non-deleted transactions (newest first). Used for reports/analytics.
+  Future<List<Transaction>> getAll() {
+    return (_db.select(_db.transactions)
+          ..where((t) => t.deletedAt.isNull())
+          ..orderBy([(t) => OrderingTerm.desc(t.occurredAt)]))
+        .get();
+  }
+
+  /// Derived balance for a single account: opening + income in - expense out
+  /// + transfers in - transfers out. Transfers never change the combined total.
+  Future<int> accountBalanceMinor(String accountId, int openingMinor) async {
+    final all = await getAll();
+    var balance = openingMinor;
+    for (final t in all) {
+      switch (t.kind) {
+        case TxnKind.income:
+          if (t.toAccountId == accountId) balance += t.amountMinor;
+          break;
+        case TxnKind.expense:
+          if (t.fromAccountId == accountId) balance -= t.amountMinor;
+          break;
+        case TxnKind.transfer:
+          if (t.fromAccountId == accountId) balance -= t.amountMinor;
+          if (t.toAccountId == accountId) balance += t.amountMinor;
+          break;
+      }
+    }
+    return balance;
+  }
+
   Future<int> sumIncomeMinor(DateTime from, DateTime to) async {
     final q = await (_db.selectOnly(_db.transactions)
           ..addColumns([_db.transactions.amountMinor.sum()])
