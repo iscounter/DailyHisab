@@ -102,8 +102,8 @@ void main() {
     final cats = await categories.getAll();
     final expenseCat = cats.firstWhere((c) => c.kind == CategoryKind.expense);
 
-    expect(
-      () => txns.add(
+    await expectLater(
+      txns.add(
         kind: TxnKind.expense,
         amountMinor: 0,
         fromAccountId: account.id,
@@ -113,8 +113,8 @@ void main() {
       throwsArgumentError,
     );
 
-    expect(
-      () => txns.add(
+    await expectLater(
+      txns.add(
         kind: TxnKind.transfer,
         amountMinor: 100,
         fromAccountId: account.id,
