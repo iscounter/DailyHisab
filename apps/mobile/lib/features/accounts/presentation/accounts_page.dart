@@ -11,6 +11,7 @@ class AccountsPage extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final accounts = ref.watch(accountsStreamProvider);
+    final balances = ref.watch(accountBalancesProvider);
     return Scaffold(
       appBar: AppBar(title: const Text('Accounts')),
       floatingActionButton: FloatingActionButton(
@@ -37,12 +38,15 @@ class AccountsPage extends ConsumerWidget {
                 child: ListTile(
                   leading: const Icon(Icons.account_balance_wallet_outlined),
                   title: Text(a.name),
-                  subtitle: Text('${a.kind.name} • opening ${formatBdtMinor(a.openingBalanceMinor)}'),
+                  subtitle: Text(
+                    '${a.kind.name} • balance ${formatBdtMinor(balances.valueOrNull?[a.id] ?? a.openingBalanceMinor)}',
+                  ),
                   trailing: IconButton(
                     icon: const Icon(Icons.archive_outlined),
                     onPressed: () async {
                       await ref.read(accountsRepositoryProvider).archive(a.id);
                       ref.invalidate(totalBalanceProvider);
+                      ref.invalidate(accountBalancesProvider);
                     },
                   ),
                 ),
@@ -114,6 +118,7 @@ class AccountsPage extends ConsumerWidget {
                           openingBalanceMinor: openingMinor,
                         );
                     ref.invalidate(totalBalanceProvider);
+                    ref.invalidate(accountBalancesProvider);
                     if (ctx.mounted) Navigator.pop(ctx);
                   },
                   child: const Text('Save'),

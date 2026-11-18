@@ -9,6 +9,7 @@ import '../features/categories/presentation/categories_page.dart';
 import '../features/budgets/presentation/budgets_page.dart';
 import '../features/analytics/presentation/analytics_page.dart';
 import '../features/settings/presentation/settings_page.dart';
+import '../features/savings/presentation/savings_page.dart';
 
 final appRouterProvider = Provider<GoRouter>((ref) {
   return GoRouter(
@@ -41,6 +42,7 @@ final appRouterProvider = Provider<GoRouter>((ref) {
           StatefulShellBranch(routes: [GoRoute(path: '/settings', builder: (_, __) => const SettingsPage())]),
         ],
       ),
+      GoRoute(path: '/savings', builder: (_, __) => const SavingsPage()),
     ],
   );
 });

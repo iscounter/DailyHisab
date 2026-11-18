@@ -25,6 +25,8 @@ and verification evidence (CI logs, since no local toolchain).
 ### P2 — Core v1 features still missing
 - [x] P2.1 Transaction search (notes) + type filter chips (client-side).
 - [x] P2.2 Reports: spending by category for the month (`monthExpenseByCategoryProvider`) shown in Analytics.
+- [x] P2.4 Per-account current balance shown on Accounts page (`accountBalancesProvider`, `balancesByAccount`).
+- [x] P2.5 CSV export of transactions to clipboard (built-in `Clipboard`, no new dependency).
 - [ ] P2.3 Backup / restore (versioned JSON export/import) with validation + confirmation.
 
 ### P3 — Localization & polish
@@ -33,8 +35,9 @@ and verification evidence (CI logs, since no local toolchain).
 - [ ] P3.3 Empty/loading/error states consistency.
 
 ### P4 — Advanced (post-v1 per README)
-- [ ] P4.1 Savings goals, debts, recurring transactions.
-- [ ] P4.2 CSV/PDF export, notifications, biometric lock.
+- [x] P4.1 Savings goals (table v3 + repo + `SavingsPage`, linked from Dashboard).
+- [ ] P4.1b Debts, recurring transactions.
+- [ ] P4.2 CSV/PDF export (CSV-to-clipboard done; file/PDF pending), notifications, biometric lock.
 
 ### P5 — Rust integration (only if justified)
 - [ ] P5.1 Benchmark Dart vs Rust for aggregation; wire `flutter_rust_bridge` if it wins.

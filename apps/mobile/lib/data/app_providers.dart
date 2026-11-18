@@ -6,6 +6,7 @@ import '../data/repositories/accounts_repository.dart';
 import '../data/repositories/categories_repository.dart';
 import '../data/repositories/transactions_repository.dart';
 import '../data/repositories/app_settings_repository.dart';
+import '../data/repositories/savings_goals_repository.dart';
 
 final accountsRepositoryProvider = Provider<AccountsRepository>((ref) {
   return AccountsRepository(ref.watch(databaseProvider));
@@ -72,6 +73,22 @@ final monthSpentProvider = FutureProvider<int>((ref) async {
 
 final appSettingsRepositoryProvider = Provider<AppSettingsRepository>((ref) {
   return AppSettingsRepository(ref.watch(databaseProvider));
+});
+
+final savingsGoalsRepositoryProvider = Provider<SavingsGoalsRepository>((ref) {
+  return SavingsGoalsRepository(ref.watch(databaseProvider));
+});
+
+final savingsGoalsProvider = StreamProvider<List<SavingsGoal>>((ref) {
+  return ref.watch(savingsGoalsRepositoryProvider).watchAll();
+});
+
+/// Map of accountId -> current balance (opening + posted transactions).
+final accountBalancesProvider = FutureProvider<Map<String, int>>((ref) async {
+  final accRepo = ref.watch(accountsRepositoryProvider);
+  final txnRepo = ref.watch(transactionsRepositoryProvider);
+  final accounts = await accRepo.getAll();
+  return txnRepo.balancesByAccount(accounts);
 });
 
 /// Free-text search query for the transactions list (client-side filter).

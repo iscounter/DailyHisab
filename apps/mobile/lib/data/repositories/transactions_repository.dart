@@ -48,6 +48,31 @@ class TransactionsRepository {
     return balance;
   }
 
+  /// Balances for many accounts computed in a single pass over transactions.
+  Future<Map<String, int>> balancesByAccount(List<Account> accounts) async {
+    final all = await getAll();
+    final result = <String, int>{};
+    for (final a in accounts) {
+      var balance = a.openingBalanceMinor;
+      for (final t in all) {
+        switch (t.kind) {
+          case TxnKind.income:
+            if (t.toAccountId == a.id) balance += t.amountMinor;
+            break;
+          case TxnKind.expense:
+            if (t.fromAccountId == a.id) balance -= t.amountMinor;
+            break;
+          case TxnKind.transfer:
+            if (t.fromAccountId == a.id) balance -= t.amountMinor;
+            if (t.toAccountId == a.id) balance += t.amountMinor;
+            break;
+        }
+      }
+      result[a.id] = balance;
+    }
+    return result;
+  }
+
   Future<int> sumIncomeMinor(DateTime from, DateTime to) async {
     final q = await (_db.selectOnly(_db.transactions)
           ..addColumns([_db.transactions.amountMinor.sum()])

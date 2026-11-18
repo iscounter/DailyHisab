@@ -21,6 +21,11 @@ class DashboardPage extends ConsumerWidget {
         title: const Text('DailyHisab'),
         actions: [
           IconButton(
+            tooltip: 'Savings goals',
+            onPressed: () => context.push('/savings'),
+            icon: const Icon(Icons.savings_outlined),
+          ),
+          IconButton(
             tooltip: 'Settings',
             onPressed: () => context.go('/settings'),
             icon: const Icon(Icons.settings_outlined),

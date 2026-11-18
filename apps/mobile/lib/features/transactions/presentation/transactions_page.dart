@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../data/app_providers.dart';
@@ -18,7 +19,16 @@ class TransactionsPage extends ConsumerWidget {
     final normalizedQuery = query.trim().toLowerCase();
 
     return Scaffold(
-      appBar: AppBar(title: const Text('Transactions')),
+      appBar: AppBar(
+        title: const Text('Transactions'),
+        actions: [
+          IconButton(
+            tooltip: 'Export CSV',
+            onPressed: () => _exportCsv(context, ref),
+            icon: const Icon(Icons.download_outlined),
+          ),
+        ],
+      ),
       floatingActionButton: FloatingActionButton(
         onPressed: () => _openSheet(
           context,
@@ -106,6 +116,7 @@ class TransactionsPage extends ConsumerWidget {
                         await ref.read(transactionsRepositoryProvider).delete(t.id);
                         ref.invalidate(monthSummaryProvider);
                         ref.invalidate(totalBalanceProvider);
+                        ref.invalidate(accountBalancesProvider);
                       },
                       child: Card(
                         child: ListTile(
@@ -169,6 +180,26 @@ class TransactionsPage extends ConsumerWidget {
         return 'Expense';
       case TxnKind.transfer:
         return 'Transfer';
+    }
+  }
+
+  Future<void> _exportCsv(BuildContext context, WidgetRef ref) async {
+    final all = await ref.read(transactionsRepositoryProvider).getAll();
+    final buf = StringBuffer(
+      'kind,amount_minor,from_account,to_account,note,occurred_at\n',
+    );
+    for (final t in all) {
+      final note = t.note.replaceAll('"', '""');
+      buf.writeln(
+        '${t.kind.name},${t.amountMinor},${t.fromAccountId ?? ''},'
+        '${t.toAccountId ?? ''},"$note",${t.occurredAt.toIso8601String()}',
+      );
+    }
+    await Clipboard.setData(ClipboardData(text: buf.toString()));
+    if (context.mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Copied ${all.length} transactions as CSV')),
+      );
     }
   }
 
@@ -442,6 +473,7 @@ class _AddTxnSheetState extends ConsumerState<_AddTxnSheet> {
     ref.invalidate(monthSummaryProvider);
     ref.invalidate(totalBalanceProvider);
     ref.invalidate(recentTransactionsProvider);
+    ref.invalidate(accountBalancesProvider);
     if (context.mounted) Navigator.pop(context);
   }
 }

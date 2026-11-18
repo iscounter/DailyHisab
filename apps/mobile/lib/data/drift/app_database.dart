@@ -77,7 +77,19 @@ class AppSettings extends Table {
   Set<Column> get primaryKey => {key};
 }
 
-@DriftDatabase(tables: [Accounts, Categories, Transactions, Budgets, AppSettings])
+class SavingsGoals extends Table {
+  TextColumn get id => text()();
+  TextColumn get name => text()();
+  IntColumn get targetMinor => integer()();
+  IntColumn get savedMinor => integer().withDefault(const Constant(0))();
+  DateTimeColumn get createdAt => dateTime()();
+
+  @override
+  Set<Column> get primaryKey => {id};
+}
+
+@DriftDatabase(
+    tables: [Accounts, Categories, Transactions, Budgets, AppSettings, SavingsGoals])
 class AppDatabase extends _$AppDatabase {
   AppDatabase(QueryExecutor e) : super(e);
 
@@ -85,7 +97,7 @@ class AppDatabase extends _$AppDatabase {
   AppDatabase.forProduction() : this(_openConnection());
 
   @override
-  int get schemaVersion => 2;
+  int get schemaVersion => 3;
 
   @override
   MigrationStrategy get migration => MigrationStrategy(
@@ -95,6 +107,9 @@ class AppDatabase extends _$AppDatabase {
         onUpgrade: (m, from, to) async {
           if (from < 2) {
             await m.createTable(appSettings);
+          }
+          if (from < 3) {
+            await m.createTable(savingsGoals);
           }
         },
       );
