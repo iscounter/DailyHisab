@@ -41,7 +41,8 @@ class TransactionsPage extends ConsumerWidget {
                 ),
                 onDismissed: (_) async {
                   await ref.read(transactionsRepositoryProvider).delete(t.id);
-                  ref.invalidate(monthSummaryProvider);
+ref.invalidate(monthSummaryProvider);
+                  ref.invalidate(totalBalanceProvider);
                 },
                 child: ListTile(
                   tileColor: Theme.of(context).colorScheme.surfaceContainerLow,
@@ -189,6 +190,7 @@ class _AddTxnSheetState extends ConsumerState<_AddTxnSheet> {
                       note: _noteCtrl.text.trim(),
                     );
                 ref.invalidate(monthSummaryProvider);
+                ref.invalidate(totalBalanceProvider);
                 ref.invalidate(recentTransactionsProvider);
                 if (context.mounted) Navigator.pop(context);
               },

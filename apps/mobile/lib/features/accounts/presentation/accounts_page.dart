@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../data/app_providers.dart';
+import '../../../core/utils/money.dart';
 import '../../../data/drift/app_database.dart';
 
 class AccountsPage extends ConsumerWidget {
@@ -19,7 +20,12 @@ class AccountsPage extends ConsumerWidget {
       body: accounts.when(
         data: (list) {
           if (list.isEmpty) {
-            return const Center(child: Padding(padding: EdgeInsets.all(24), child: Text('No accounts yet. Add Cash, Bank, or Wallet.')));
+            return const Center(
+              child: Padding(
+                padding: EdgeInsets.all(24),
+                child: Text('No accounts yet. Add Cash, Bank, or Wallet.'),
+              ),
+            );
           }
           return ListView.separated(
             padding: const EdgeInsets.all(16),
@@ -27,17 +33,18 @@ class AccountsPage extends ConsumerWidget {
             separatorBuilder: (_, __) => const SizedBox(height: 8),
             itemBuilder: (context, i) {
               final a = list[i];
-              return ListTile(
-                tileColor: Theme.of(context).colorScheme.surfaceContainerLow,
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-                leading: const Icon(Icons.account_balance_wallet_outlined),
-                title: Text(a.name),
-                subtitle: Text(a.kind.name),
-                trailing: IconButton(
-                  icon: const Icon(Icons.archive_outlined),
-                  onPressed: () async {
-                    await ref.read(accountsRepositoryProvider).archive(a.id);
-                  },
+              return Card(
+                child: ListTile(
+                  leading: const Icon(Icons.account_balance_wallet_outlined),
+                  title: Text(a.name),
+                  subtitle: Text('${a.kind.name} • opening ${formatBdtMinor(a.openingBalanceMinor)}'),
+                  trailing: IconButton(
+                    icon: const Icon(Icons.archive_outlined),
+                    onPressed: () async {
+                      await ref.read(accountsRepositoryProvider).archive(a.id);
+                      ref.invalidate(totalBalanceProvider);
+                    },
+                  ),
                 ),
               );
             },
@@ -51,40 +58,67 @@ class AccountsPage extends ConsumerWidget {
 
   Future<void> _showAdd(BuildContext context, WidgetRef ref) async {
     final nameCtrl = TextEditingController();
+    final openingCtrl = TextEditingController(text: '0');
     AccountKind kind = AccountKind.cash;
-    await showDialog(
+    await showDialog<void>(
       context: context,
-      builder: (ctx) => StatefulBuilder(
-        builder: (ctx, setS) => AlertDialog(
-          title: const Text('Add account'),
-          content: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              TextField(controller: nameCtrl, decoration: const InputDecoration(labelText: 'Name', hintText: 'e.g. Cash, bKash')),
-              const SizedBox(height: 12),
-              DropdownButtonFormField<AccountKind>(
-                initialValue: kind,
-                decoration: const InputDecoration(labelText: 'Type'),
-                items: AccountKind.values.map((k) => DropdownMenuItem(value: k, child: Text(k.name))).toList(),
-                onChanged: (v) => setS(() => kind = v ?? AccountKind.cash),
+      builder: (ctx) {
+        return StatefulBuilder(
+          builder: (ctx, setS) {
+            return AlertDialog(
+              title: const Text('Add account'),
+              content: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  TextField(
+                    controller: nameCtrl,
+                    decoration: const InputDecoration(labelText: 'Name', hintText: 'e.g. Cash, bKash'),
+                  ),
+                  const SizedBox(height: 12),
+                  DropdownButtonFormField<AccountKind>(
+                    initialValue: kind,
+                    decoration: const InputDecoration(labelText: 'Type'),
+                    items: AccountKind.values
+                        .map((k) => DropdownMenuItem(value: k, child: Text(k.name)))
+                        .toList(),
+                    onChanged: (v) => setS(() => kind = v ?? AccountKind.cash),
+                  ),
+                  const SizedBox(height: 12),
+                  TextField(
+                    controller: openingCtrl,
+                    keyboardType: const TextInputType.numberWithOptions(decimal: true, signed: true),
+                    decoration: const InputDecoration(labelText: 'Opening balance (BDT)'),
+                  ),
+                ],
               ),
-            ],
-          ),
-          actions: [
-            TextButton(onPressed: () => Navigator.pop(ctx), child: const Text('Cancel')),
-            FilledButton(
-              onPressed: () async {
-                final n = nameCtrl.text.trim();
-                if (n.isEmpty) return;
-                await ref.read(accountsRepositoryProvider).create(name: n, kind: kind);
-                if (ctx.mounted) Navigator.pop(ctx);
-              },
-              child: const Text('Save'),
-            ),
-          ],
-        ),
-      ),
+              actions: [
+                TextButton(
+                  onPressed: () => Navigator.pop(ctx),
+                  child: const Text('Cancel'),
+                ),
+                FilledButton(
+                  onPressed: () async {
+                    final n = nameCtrl.text.trim();
+                    if (n.isEmpty) return;
+                    final raw = openingCtrl.text.trim();
+                    final val = raw.isEmpty ? 0.0 : double.tryParse(raw) ?? 0.0;
+                    await ref.read(accountsRepositoryProvider).create(
+                          name: n,
+                          kind: kind,
+                          openingBalanceMinor: (val * 100).round(),
+                        );
+                    ref.invalidate(totalBalanceProvider);
+                    if (ctx.mounted) Navigator.pop(ctx);
+                  },
+                  child: const Text('Save'),
+                ),
+              ],
+            );
+          },
+        );
+      },
     );
     nameCtrl.dispose();
+    openingCtrl.dispose();
   }
 }

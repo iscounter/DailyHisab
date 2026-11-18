@@ -15,6 +15,7 @@ class Accounts extends Table {
   TextColumn get id => text()();
   TextColumn get name => text()();
   IntColumn get kind => intEnum<AccountKind>()();
+  IntColumn get openingBalanceMinor => integer().withDefault(const Constant(0))();
   BoolColumn get isArchived => boolean().withDefault(const Constant(false))();
   DateTimeColumn get createdAt => dateTime()();
 

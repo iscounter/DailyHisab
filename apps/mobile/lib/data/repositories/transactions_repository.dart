@@ -34,6 +34,22 @@ class TransactionsRepository {
     return q.read(_db.transactions.amountMinor.sum()) ?? 0;
   }
 
+  Future<int> sumAllIncomeMinor() async {
+    final q = await (_db.selectOnly(_db.transactions)
+          ..addColumns([_db.transactions.amountMinor.sum()])
+          ..where(_db.transactions.type.equalsValue(TxnType.income)))
+        .getSingle();
+    return q.read(_db.transactions.amountMinor.sum()) ?? 0;
+  }
+
+  Future<int> sumAllExpenseMinor() async {
+    final q = await (_db.selectOnly(_db.transactions)
+          ..addColumns([_db.transactions.amountMinor.sum()])
+          ..where(_db.transactions.type.equalsValue(TxnType.expense)))
+        .getSingle();
+    return q.read(_db.transactions.amountMinor.sum()) ?? 0;
+  }
+
   Future<void> add({
     required TxnType type,
     required int amountMinor,

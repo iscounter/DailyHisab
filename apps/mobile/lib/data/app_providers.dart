@@ -50,3 +50,14 @@ final monthSummaryProvider = FutureProvider<({int incomeMinor, int expenseMinor}
   final expense = await repo.sumExpenseMinor(r.from, r.to);
   return (incomeMinor: income, expenseMinor: expense);
 });
+
+/// Total balance across all active accounts:
+/// sum(opening balances) + all-time income - all-time expense.
+final totalBalanceProvider = FutureProvider<int>((ref) async {
+  final accounts = ref.watch(accountsRepositoryProvider);
+  final txns = ref.watch(transactionsRepositoryProvider);
+  final opening = await accounts.sumOpeningBalanceMinor();
+  final income = await txns.sumAllIncomeMinor();
+  final expense = await txns.sumAllExpenseMinor();
+  return opening + income - expense;
+});

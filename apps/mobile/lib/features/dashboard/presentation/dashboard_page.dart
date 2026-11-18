@@ -12,6 +12,7 @@ class DashboardPage extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final summary = ref.watch(monthSummaryProvider);
+    final totalBalance = ref.watch(totalBalanceProvider);
     final recent = ref.watch(recentTransactionsProvider);
     final accounts = ref.watch(accountsStreamProvider);
 
@@ -34,11 +35,14 @@ class DashboardPage extends ConsumerWidget {
       body: RefreshIndicator(
         onRefresh: () async {
           ref.invalidate(monthSummaryProvider);
+          ref.invalidate(totalBalanceProvider);
           ref.invalidate(recentTransactionsProvider);
         },
         child: ListView(
           padding: const EdgeInsets.fromLTRB(16, 8, 16, 24),
           children: [
+            _TotalBalanceCard(balance: totalBalance),
+            const SizedBox(height: 12),
             _SummaryCard(summary: summary),
             const SizedBox(height: 16),
             Text('This month', style: Theme.of(context).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w600)),
@@ -70,6 +74,41 @@ class DashboardPage extends ConsumerWidget {
               error: (e, _) => Text('Error: $e'),
             ),
           ],
+        ),
+      ),
+    );
+  }
+}
+
+class _TotalBalanceCard extends StatelessWidget {
+  const _TotalBalanceCard({required this.balance});
+  final AsyncValue<int> balance;
+
+  @override
+  Widget build(BuildContext context) {
+    final cs = Theme.of(context).colorScheme;
+    return Card(
+      elevation: 0,
+      color: cs.primary,
+      child: Padding(
+        padding: const EdgeInsets.all(20),
+        child: balance.when(
+          data: (v) => Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text('Total balance', style: TextStyle(color: cs.onPrimary.withValues(alpha: 0.85))),
+              const SizedBox(height: 6),
+              Text(
+                formatBdtMinor(v),
+                style: Theme.of(context).textTheme.headlineMedium?.copyWith(
+                      color: cs.onPrimary,
+                      fontWeight: FontWeight.w700,
+                    ),
+              ),
+            ],
+          ),
+          loading: () => const SizedBox(height: 72, child: Center(child: CircularProgressIndicator())),
+          error: (e, _) => Text('Failed to load balance: $e'),
         ),
       ),
     );
