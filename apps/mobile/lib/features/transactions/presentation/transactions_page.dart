@@ -171,7 +171,7 @@ class _AddTxnSheetState extends ConsumerState<_AddTxnSheet> {
           (widget.accounts.length > 1 ? widget.accounts[1].id : widget.accounts.first.id);
       _categoryId = e.categoryId;
       _date = e.occurredAt;
-      _amountCtrl.text = (e.amountMinor / 100).toStringAsFixed(2);
+      _amountCtrl.text = minorToBdtInput(e.amountMinor);
       _noteCtrl.text = e.note;
     } else {
       _kind = TxnKind.expense;
@@ -320,9 +320,8 @@ class _AddTxnSheetState extends ConsumerState<_AddTxnSheet> {
   }
 
   Future<void> _save(BuildContext context, WidgetRef ref) async {
-    final raw = _amountCtrl.text.trim().replaceAll(',', '');
-    final val = double.tryParse(raw);
-    if (val == null || val <= 0) {
+    final minor = parseBdtToMinor(_amountCtrl.text);
+    if (minor == null || minor <= 0) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('Enter a valid amount > 0')),
       );
@@ -353,7 +352,6 @@ class _AddTxnSheetState extends ConsumerState<_AddTxnSheet> {
       }
     }
 
-    final minor = (val * 100).round();
     final repo = ref.read(transactionsRepositoryProvider);
     final note = _noteCtrl.text.trim();
 

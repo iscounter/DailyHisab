@@ -101,11 +101,17 @@ class AccountsPage extends ConsumerWidget {
                     final n = nameCtrl.text.trim();
                     if (n.isEmpty) return;
                     final raw = openingCtrl.text.trim();
-                    final val = raw.isEmpty ? 0.0 : double.tryParse(raw) ?? 0.0;
+                    final openingMinor = raw.isEmpty ? 0 : parseBdtToMinor(raw);
+                    if (openingMinor == null) {
+                      ScaffoldMessenger.of(ctx).showSnackBar(
+                        const SnackBar(content: Text('Invalid opening balance')),
+                      );
+                      return;
+                    }
                     await ref.read(accountsRepositoryProvider).create(
                           name: n,
                           kind: kind,
-                          openingBalanceMinor: (val * 100).round(),
+                          openingBalanceMinor: openingMinor,
                         );
                     ref.invalidate(totalBalanceProvider);
                     if (ctx.mounted) Navigator.pop(ctx);

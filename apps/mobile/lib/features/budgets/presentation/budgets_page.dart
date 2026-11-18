@@ -120,14 +120,19 @@ class BudgetsPage extends ConsumerWidget {
             ),
             FilledButton(
               onPressed: () async {
-                final v = double.tryParse(limitCtrl.text.trim());
-                if (v == null || v <= 0) return;
+                final limitMinor = parseBdtToMinor(limitCtrl.text);
+                if (limitMinor == null || limitMinor <= 0) {
+                  ScaffoldMessenger.of(ctx).showSnackBar(
+                    const SnackBar(content: Text('Enter a valid limit > 0')),
+                  );
+                  return;
+                }
                 await db.into(db.budgets).insert(
                       BudgetsCompanion.insert(
                         id: DateTime.now().microsecondsSinceEpoch.toString(),
                         name: nameCtrl.text.trim().isEmpty ? 'Budget' : nameCtrl.text.trim(),
                         monthYear: my,
-                        limitMinor: (v * 100).round(),
+                        limitMinor: limitMinor,
                         createdAt: DateTime.now(),
                       ),
                     );

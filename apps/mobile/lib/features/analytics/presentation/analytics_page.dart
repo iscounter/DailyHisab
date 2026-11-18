@@ -17,8 +17,8 @@ class AnalyticsPage extends ConsumerWidget {
         padding: const EdgeInsets.all(16),
         child: summary.when(
           data: (s) {
-            final inc = s.incomeMinor.toDouble();
-            final exp = s.expenseMinor.toDouble();
+            final inc = s.incomeMinor / 100;
+            final exp = s.expenseMinor / 100;
             final maxY = [inc, exp, 10000].reduce((a, b) => a > b ? a : b) * 1.2;
             return Column(
               crossAxisAlignment: CrossAxisAlignment.start,

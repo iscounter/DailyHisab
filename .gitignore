@@ -11,14 +11,15 @@ apps/mobile/android/app/build/
 apps/mobile/*.iml
 *.g.dart
 *.freezed.dart
-pubspec.lock
 
 # Rust
 rust/dailyhisab_core/target/
-Cargo.lock
 
 # IDE
 .vscode/
 .idea/
 *.swp
 .DS_Store
+
+# NOTE: pubspec.lock and Cargo.lock are intentionally committed
+# (reproducible builds, see PROJECT_ARCHITECTURE.md 2.1).
