@@ -1,12 +1,12 @@
-name: Android Release AAB (unsigned artifact)
+name: Android Release AAB + APKs
 
 on:
   workflow_dispatch:
 
 jobs:
-  build-aab:
+  build-release:
     runs-on: ubuntu-latest
-    timeout-minutes: 45
+    timeout-minutes: 60
     defaults:
       run:
         working-directory: apps/mobile
@@ -37,12 +37,22 @@ jobs:
       - name: Generate code
         run: dart run build_runner build --delete-conflicting-outputs
 
-      - name: Build release AAB (unsigned)
+      - name: Build release AAB (for Play Store)
         run: flutter build appbundle --release
 
-      - name: Upload AAB artifact
+      - name: Build release APKs (split per ABI) + size analysis
+        run: flutter build apk --release --split-per-abi --analyze-size
+
+      - name: Upload AAB
         uses: actions/upload-artifact@v4
         with:
-          name: dailyhisab-release-aab-unsigned
+          name: dailyhisab-release-aab
           path: apps/mobile/build/app/outputs/bundle/release/app-release.aab
+          if-no-files-found: error
+
+      - name: Upload per-ABI release APKs
+        uses: actions/upload-artifact@v4
+        with:
+          name: dailyhisab-release-apks
+          path: apps/mobile/build/app/outputs/flutter-apk/*.apk
           if-no-files-found: error
