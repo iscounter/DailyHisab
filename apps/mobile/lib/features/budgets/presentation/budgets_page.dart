@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../../data/app_providers.dart';
 import '../../../data/database_providers.dart';
 import '../../../data/drift/app_database.dart';
 import '../../../core/utils/money.dart';
@@ -17,6 +18,7 @@ class BudgetsPage extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final db = ref.watch(databaseProvider);
     final my = _currentMonthYear();
+    final spent = ref.watch(monthSpentProvider).valueOrNull ?? 0;
     return Scaffold(
       appBar: AppBar(title: const Text('Budgets')),
       floatingActionButton: FloatingActionButton(
@@ -44,15 +46,41 @@ class BudgetsPage extends ConsumerWidget {
             separatorBuilder: (_, __) => const SizedBox(height: 8),
             itemBuilder: (context, i) {
               final b = list[i];
+              final ratio = b.limitMinor <= 0 ? 0.0 : (spent / b.limitMinor).clamp(0.0, 1.0).toDouble();
+              final over = spent > b.limitMinor;
               return Card(
-                child: ListTile(
-                  title: Text(b.name),
-                  subtitle: Text('Limit ${formatBdtMinor(b.limitMinor)} • ${b.monthYear}'),
-                  trailing: IconButton(
-                    icon: const Icon(Icons.delete_outline),
-                    onPressed: () async {
-                      await (db.delete(db.budgets)..where((t) => t.id.equals(b.id))).go();
-                    },
+                child: Padding(
+                  padding: const EdgeInsets.all(12),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Row(
+                        children: [
+                          Expanded(child: Text(b.name, style: const TextStyle(fontWeight: FontWeight.w600))),
+                          IconButton(
+                            icon: const Icon(Icons.delete_outline),
+                            onPressed: () async {
+                              await (db.delete(db.budgets)..where((t) => t.id.equals(b.id))).go();
+                            },
+                          ),
+                        ],
+                      ),
+                      Text('Limit ${formatBdtMinor(b.limitMinor)}'),
+                      const SizedBox(height: 4),
+                      Text(
+                        'Spent ${formatBdtMinor(spent)} of ${formatBdtMinor(b.limitMinor)}',
+                        style: TextStyle(color: over ? Theme.of(context).colorScheme.error : null),
+                      ),
+                      const SizedBox(height: 8),
+                      ClipRRect(
+                        borderRadius: BorderRadius.circular(8),
+                        child: LinearProgressIndicator(
+                          value: ratio,
+                          minHeight: 8,
+                          backgroundColor: Theme.of(context).colorScheme.surfaceContainerHighest,
+                        ),
+                      ),
+                    ],
                   ),
                 ),
               );
@@ -103,6 +131,7 @@ class BudgetsPage extends ConsumerWidget {
                         createdAt: DateTime.now(),
                       ),
                     );
+                ref.invalidate(monthSpentProvider);
                 if (ctx.mounted) Navigator.pop(ctx);
               },
               child: const Text('Save'),

@@ -61,3 +61,10 @@ final totalBalanceProvider = FutureProvider<int>((ref) async {
   final expense = await txns.sumAllExpenseMinor();
   return opening + income - expense;
 });
+
+/// Total expenses in the current month (used for budget spent/remaining).
+final monthSpentProvider = FutureProvider<int>((ref) async {
+  final repo = ref.watch(transactionsRepositoryProvider);
+  final r = currentMonthRange();
+  return repo.sumExpenseMinor(r.from, r.to);
+});

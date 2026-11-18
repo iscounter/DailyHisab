@@ -71,6 +71,28 @@ class TransactionsRepository {
         ));
   }
 
+  Future<void> update({
+    required String id,
+    required TxnType type,
+    required int amountMinor,
+    required String accountId,
+    required String categoryId,
+    required DateTime occurredAt,
+    String note = '',
+  }) async {
+    if (amountMinor <= 0) throw ArgumentError('amountMinor must be > 0');
+    await (_db.update(_db.transactions)..where((t) => t.id.equals(id))).write(
+      TransactionsCompanion(
+        type: Value(type),
+        amountMinor: Value(amountMinor),
+        accountId: Value(accountId),
+        categoryId: Value(categoryId),
+        occurredAt: Value(occurredAt),
+        note: Value(note),
+      ),
+    );
+  }
+
   Future<void> delete(String id) async {
     await (_db.delete(_db.transactions)..where((t) => t.id.equals(id))).go();
   }
