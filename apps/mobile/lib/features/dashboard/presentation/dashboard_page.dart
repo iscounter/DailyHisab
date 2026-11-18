@@ -171,17 +171,29 @@ class _TxnTile extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final isIncome = txn.type == TxnType.income;
-    final color = isIncome ? Colors.teal : Colors.red.shade700;
+    final isIncome = txn.kind == TxnKind.income;
+    final isTransfer = txn.kind == TxnKind.transfer;
+    final color = isIncome
+        ? Colors.teal
+        : (isTransfer ? Colors.blue : Colors.red.shade700);
+    final icon = isIncome
+        ? Icons.arrow_downward
+        : (isTransfer ? Icons.swap_horiz : Icons.arrow_upward);
     return Card(
       margin: const EdgeInsets.only(bottom: 8),
       child: ListTile(
         leading: CircleAvatar(
           backgroundColor: color.withValues(alpha: 0.12),
-          child: Icon(isIncome ? Icons.arrow_downward : Icons.arrow_upward, color: color),
+          child: Icon(icon, color: color),
         ),
         title: Text(formatBdtMinor(txn.amountMinor), style: const TextStyle(fontWeight: FontWeight.w600)),
-        subtitle: Text(txn.note.isEmpty ? (isIncome ? 'Income' : 'Expense') : txn.note, maxLines: 1, overflow: TextOverflow.ellipsis),
+        subtitle: Text(
+          txn.note.isEmpty
+              ? (isIncome ? 'Income' : (isTransfer ? 'Transfer' : 'Expense'))
+              : txn.note,
+          maxLines: 1,
+          overflow: TextOverflow.ellipsis,
+        ),
         trailing: Text('${txn.occurredAt.month}/${txn.occurredAt.day}', style: Theme.of(context).textTheme.bodySmall),
       ),
     );

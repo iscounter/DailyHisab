@@ -9,8 +9,10 @@ class TransactionsRepository {
   TransactionsRepository(this._db);
   final AppDatabase _db;
 
+  /// Recent, non-deleted transactions (newest first).
   Stream<List<Transaction>> watchRecent({int limit = 100}) {
     return (_db.select(_db.transactions)
+          ..where((t) => t.deletedAt.isNull())
           ..orderBy([(t) => OrderingTerm.desc(t.occurredAt)])
           ..limit(limit))
         .watch();
@@ -19,8 +21,10 @@ class TransactionsRepository {
   Future<int> sumIncomeMinor(DateTime from, DateTime to) async {
     final q = await (_db.selectOnly(_db.transactions)
           ..addColumns([_db.transactions.amountMinor.sum()])
-          ..where(_db.transactions.type.equalsValue(TxnType.income) &
-              _db.transactions.occurredAt.isBetweenValues(from, to)))
+          ..where(
+              _db.transactions.kind.equalsValue(TxnKind.income) &
+                  _db.transactions.deletedAt.isNull() &
+                  _db.transactions.occurredAt.isBetweenValues(from, to)))
         .getSingle();
     return q.read(_db.transactions.amountMinor.sum()) ?? 0;
   }
@@ -28,8 +32,10 @@ class TransactionsRepository {
   Future<int> sumExpenseMinor(DateTime from, DateTime to) async {
     final q = await (_db.selectOnly(_db.transactions)
           ..addColumns([_db.transactions.amountMinor.sum()])
-          ..where(_db.transactions.type.equalsValue(TxnType.expense) &
-              _db.transactions.occurredAt.isBetweenValues(from, to)))
+          ..where(
+              _db.transactions.kind.equalsValue(TxnKind.expense) &
+                  _db.transactions.deletedAt.isNull() &
+                  _db.transactions.occurredAt.isBetweenValues(from, to)))
         .getSingle();
     return q.read(_db.transactions.amountMinor.sum()) ?? 0;
   }
@@ -37,7 +43,8 @@ class TransactionsRepository {
   Future<int> sumAllIncomeMinor() async {
     final q = await (_db.selectOnly(_db.transactions)
           ..addColumns([_db.transactions.amountMinor.sum()])
-          ..where(_db.transactions.type.equalsValue(TxnType.income)))
+          ..where(_db.transactions.kind.equalsValue(TxnKind.income) &
+              _db.transactions.deletedAt.isNull()))
         .getSingle();
     return q.read(_db.transactions.amountMinor.sum()) ?? 0;
   }
@@ -45,26 +52,43 @@ class TransactionsRepository {
   Future<int> sumAllExpenseMinor() async {
     final q = await (_db.selectOnly(_db.transactions)
           ..addColumns([_db.transactions.amountMinor.sum()])
-          ..where(_db.transactions.type.equalsValue(TxnType.expense)))
+          ..where(_db.transactions.kind.equalsValue(TxnKind.expense) &
+              _db.transactions.deletedAt.isNull()))
         .getSingle();
     return q.read(_db.transactions.amountMinor.sum()) ?? 0;
   }
 
   Future<void> add({
-    required TxnType type,
+    required TxnKind kind,
     required int amountMinor,
-    required String accountId,
-    required String categoryId,
+    String? fromAccountId,
+    String? toAccountId,
+    String? categoryId,
     required DateTime occurredAt,
     String note = '',
   }) async {
     if (amountMinor <= 0) throw ArgumentError('amountMinor must be > 0');
+    if (kind == TxnKind.expense && fromAccountId == null) {
+      throw ArgumentError('expense requires a source account');
+    }
+    if (kind == TxnKind.income && toAccountId == null) {
+      throw ArgumentError('income requires a destination account');
+    }
+    if (kind == TxnKind.transfer) {
+      if (fromAccountId == null || toAccountId == null) {
+        throw ArgumentError('transfer requires both accounts');
+      }
+      if (fromAccountId == toAccountId) {
+        throw ArgumentError('transfer accounts must differ');
+      }
+    }
     await _db.into(_db.transactions).insert(TransactionsCompanion.insert(
           id: _uuid.v4(),
-          type: type,
+          kind: kind,
           amountMinor: amountMinor,
-          accountId: accountId,
-          categoryId: categoryId,
+          fromAccountId: Value(fromAccountId),
+          toAccountId: Value(toAccountId),
+          categoryId: Value(categoryId),
           occurredAt: occurredAt,
           note: Value(note),
           createdAt: DateTime.now(),
@@ -73,27 +97,33 @@ class TransactionsRepository {
 
   Future<void> update({
     required String id,
-    required TxnType type,
+    required TxnKind kind,
     required int amountMinor,
-    required String accountId,
-    required String categoryId,
+    String? fromAccountId,
+    String? toAccountId,
+    String? categoryId,
     required DateTime occurredAt,
     String note = '',
   }) async {
     if (amountMinor <= 0) throw ArgumentError('amountMinor must be > 0');
     await (_db.update(_db.transactions)..where((t) => t.id.equals(id))).write(
       TransactionsCompanion(
-        type: Value(type),
+        kind: Value(kind),
         amountMinor: Value(amountMinor),
-        accountId: Value(accountId),
+        fromAccountId: Value(fromAccountId),
+        toAccountId: Value(toAccountId),
         categoryId: Value(categoryId),
         occurredAt: Value(occurredAt),
         note: Value(note),
+        updatedAt: Value(DateTime.now()),
       ),
     );
   }
 
+  /// Soft-delete: hidden from lists/sums, recoverable from the database file.
   Future<void> delete(String id) async {
-    await (_db.delete(_db.transactions)..where((t) => t.id.equals(id))).go();
+    await (_db.update(_db.transactions)..where((t) => t.id.equals(id))).write(
+      TransactionsCompanion(deletedAt: Value(DateTime.now())),
+    );
   }
 }

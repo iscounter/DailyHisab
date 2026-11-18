@@ -18,17 +18,27 @@ class CategoriesPage extends ConsumerWidget {
       ),
       body: cats.when(
         data: (list) {
-          if (list.isEmpty) return const Center(child: Text('No categories. Tap + to add (defaults are seeded on first run in some flows).'));
-          final income = list.where((c) => c.type == TxnType.income).toList();
-          final expense = list.where((c) => c.type == TxnType.expense).toList();
+          if (list.isEmpty) {
+            return const Center(
+              child: Text('No categories. Tap + to add.'),
+            );
+          }
+          final income = list.where((c) => c.kind == CategoryKind.income).toList();
+          final expense = list.where((c) => c.kind == CategoryKind.expense).toList();
           return ListView(
             padding: const EdgeInsets.all(16),
             children: [
               Text('Income', style: Theme.of(context).textTheme.titleSmall),
-              ...income.map((c) => ListTile(title: Text(c.name), leading: const Icon(Icons.south_west))),
+              ...income.map((c) => ListTile(
+                    title: Text(c.name),
+                    leading: const Icon(Icons.south_west),
+                  )),
               const SizedBox(height: 16),
               Text('Expense', style: Theme.of(context).textTheme.titleSmall),
-              ...expense.map((c) => ListTile(title: Text(c.name), leading: const Icon(Icons.north_east))),
+              ...expense.map((c) => ListTile(
+                    title: Text(c.name),
+                    leading: const Icon(Icons.north_east),
+                  )),
             ],
           );
         },
@@ -40,41 +50,51 @@ class CategoriesPage extends ConsumerWidget {
 
   Future<void> _showAdd(BuildContext context, WidgetRef ref) async {
     final nameCtrl = TextEditingController();
-    TxnType type = TxnType.expense;
-    await showDialog(
+    CategoryKind kind = CategoryKind.expense;
+    await showDialog<void>(
       context: context,
-      builder: (ctx) => StatefulBuilder(
-        builder: (ctx, setS) => AlertDialog(
-          title: const Text('Add category'),
-          content: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              TextField(controller: nameCtrl, decoration: const InputDecoration(labelText: 'Name')),
-              const SizedBox(height: 12),
-              DropdownButtonFormField<TxnType>(
-                initialValue: type,
-                items: const [
-                  DropdownMenuItem(value: TxnType.expense, child: Text('Expense')),
-                  DropdownMenuItem(value: TxnType.income, child: Text('Income')),
+      builder: (ctx) {
+        return StatefulBuilder(
+          builder: (ctx, setS) {
+            return AlertDialog(
+              title: const Text('Add category'),
+              content: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  TextField(
+                    controller: nameCtrl,
+                    decoration: const InputDecoration(labelText: 'Name'),
+                  ),
+                  const SizedBox(height: 12),
+                  DropdownButtonFormField<CategoryKind>(
+                    initialValue: kind,
+                    items: const [
+                      DropdownMenuItem(value: CategoryKind.expense, child: Text('Expense')),
+                      DropdownMenuItem(value: CategoryKind.income, child: Text('Income')),
+                    ],
+                    onChanged: (v) => setS(() => kind = v ?? CategoryKind.expense),
+                  ),
                 ],
-                onChanged: (v) => setS(() => type = v ?? TxnType.expense),
               ),
-            ],
-          ),
-          actions: [
-            TextButton(onPressed: () => Navigator.pop(ctx), child: const Text('Cancel')),
-            FilledButton(
-              onPressed: () async {
-                final n = nameCtrl.text.trim();
-                if (n.isEmpty) return;
-                await ref.read(categoriesRepositoryProvider).create(name: n, type: type);
-                if (ctx.mounted) Navigator.pop(ctx);
-              },
-              child: const Text('Save'),
-            ),
-          ],
-        ),
-      ),
+              actions: [
+                TextButton(
+                  onPressed: () => Navigator.pop(ctx),
+                  child: const Text('Cancel'),
+                ),
+                FilledButton(
+                  onPressed: () async {
+                    final n = nameCtrl.text.trim();
+                    if (n.isEmpty) return;
+                    await ref.read(categoriesRepositoryProvider).create(name: n, kind: kind);
+                    if (ctx.mounted) Navigator.pop(ctx);
+                  },
+                  child: const Text('Save'),
+                ),
+              ],
+            );
+          },
+        );
+      },
     );
     nameCtrl.dispose();
   }

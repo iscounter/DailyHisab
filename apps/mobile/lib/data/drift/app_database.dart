@@ -9,13 +9,16 @@ part 'app_database.g.dart';
 
 enum AccountKind { cash, bank, wallet, other }
 
-enum TxnType { income, expense }
+enum CategoryKind { income, expense }
+
+enum TxnKind { income, expense, transfer }
 
 class Accounts extends Table {
   TextColumn get id => text()();
   TextColumn get name => text()();
   IntColumn get kind => intEnum<AccountKind>()();
   IntColumn get openingBalanceMinor => integer().withDefault(const Constant(0))();
+  TextColumn get currencyCode => text().withDefault(const Constant('BDT'))();
   BoolColumn get isArchived => boolean().withDefault(const Constant(false))();
   DateTimeColumn get createdAt => dateTime()();
 
@@ -26,7 +29,7 @@ class Accounts extends Table {
 class Categories extends Table {
   TextColumn get id => text()();
   TextColumn get name => text()();
-  IntColumn get type => intEnum<TxnType>()();
+  IntColumn get kind => intEnum<CategoryKind>()();
   TextColumn get iconKey => text().nullable()();
   BoolColumn get isDefault => boolean().withDefault(const Constant(false))();
   DateTimeColumn get createdAt => dateTime()();
@@ -37,14 +40,17 @@ class Categories extends Table {
 
 class Transactions extends Table {
   TextColumn get id => text()();
-  IntColumn get type => intEnum<TxnType>()();
+  IntColumn get kind => intEnum<TxnKind>()();
   IntColumn get amountMinor => integer()();
   TextColumn get currencyCode => text().withDefault(const Constant('BDT'))();
-  TextColumn get accountId => text().references(Accounts, #id)();
-  TextColumn get categoryId => text().references(Categories, #id)();
-  DateTimeColumn get occurredAt => dateTime()();
+  TextColumn get categoryId => text().nullable().references(Categories, #id)();
+  TextColumn get fromAccountId => text().nullable().references(Accounts, #id)();
+  TextColumn get toAccountId => text().nullable().references(Accounts, #id)();
   TextColumn get note => text().withDefault(const Constant(''))();
+  DateTimeColumn get occurredAt => dateTime()();
   DateTimeColumn get createdAt => dateTime()();
+  DateTimeColumn get updatedAt => dateTime().nullable()();
+  DateTimeColumn get deletedAt => dateTime().nullable()();
 
   @override
   Set<Column> get primaryKey => {id};

@@ -17,7 +17,12 @@ class TransactionsPage extends ConsumerWidget {
     return Scaffold(
       appBar: AppBar(title: const Text('Transactions')),
       floatingActionButton: FloatingActionButton(
-        onPressed: () => _openSheet(context, ref, accounts.valueOrNull ?? [], categories.valueOrNull ?? []),
+        onPressed: () => _openSheet(
+          context,
+          ref,
+          accounts.valueOrNull ?? [],
+          categories.valueOrNull ?? [],
+        ),
         child: const Icon(Icons.add),
       ),
       body: txns.when(
@@ -29,7 +34,6 @@ class TransactionsPage extends ConsumerWidget {
             separatorBuilder: (_, __) => const SizedBox(height: 8),
             itemBuilder: (context, i) {
               final t = items[i];
-              final isIncome = t.type == TxnType.income;
               return Dismissible(
                 key: ValueKey(t.id),
                 direction: DismissDirection.endToStart,
@@ -46,14 +50,13 @@ class TransactionsPage extends ConsumerWidget {
                 },
                 child: Card(
                   child: ListTile(
-                    leading: Icon(isIncome ? Icons.north_east : Icons.south_west,
-                        color: isIncome ? Colors.teal : Colors.red.shade700),
+                    leading: Icon(_iconFor(t.kind), color: _colorFor(t.kind)),
                     title: Text(formatBdtMinor(t.amountMinor)),
                     subtitle: Text(
-                      '${t.note.isEmpty ? (isIncome ? 'Income' : 'Expense') : t.note}\n${t.occurredAt.toLocal().toString().split('.').first}',
+                      '${_labelFor(context, t)}\n${t.occurredAt.toLocal().toString().split('.').first}',
                       style: Theme.of(context).textTheme.bodySmall,
                     ),
-                    isThreeLine: t.note.isNotEmpty,
+                    isThreeLine: true,
                     trailing: const Icon(Icons.chevron_right),
                     onTap: () => _openSheet(
                       context,
@@ -72,6 +75,39 @@ class TransactionsPage extends ConsumerWidget {
         error: (e, _) => Center(child: Text('Error: $e')),
       ),
     );
+  }
+
+  IconData _iconFor(TxnKind kind) {
+    switch (kind) {
+      case TxnKind.income:
+        return Icons.north_east;
+      case TxnKind.expense:
+        return Icons.south_west;
+      case TxnKind.transfer:
+        return Icons.swap_horiz;
+    }
+  }
+
+  Color _colorFor(TxnKind kind) {
+    switch (kind) {
+      case TxnKind.income:
+        return Colors.teal;
+      case TxnKind.expense:
+        return Colors.red.shade700;
+      case TxnKind.transfer:
+        return Colors.blue;
+    }
+  }
+
+  String _labelFor(BuildContext context, Transaction t) {
+    switch (t.kind) {
+      case TxnKind.income:
+        return 'Income';
+      case TxnKind.expense:
+        return 'Expense';
+      case TxnKind.transfer:
+        return 'Transfer';
+    }
   }
 
   Future<void> _openSheet(
@@ -114,8 +150,9 @@ class _AddTxnSheet extends ConsumerStatefulWidget {
 }
 
 class _AddTxnSheetState extends ConsumerState<_AddTxnSheet> {
-  late TxnType _type;
-  late String _accountId;
+  late TxnKind _kind;
+  late String _fromAccountId;
+  late String _toAccountId;
   String? _categoryId;
   final _amountCtrl = TextEditingController();
   final _noteCtrl = TextEditingController();
@@ -128,21 +165,29 @@ class _AddTxnSheetState extends ConsumerState<_AddTxnSheet> {
     super.initState();
     final e = widget.existing;
     if (e != null) {
-      _type = e.type;
-      _accountId = e.accountId;
+      _kind = e.kind;
+      _fromAccountId = e.fromAccountId ?? widget.accounts.first.id;
+      _toAccountId = e.toAccountId ??
+          (widget.accounts.length > 1 ? widget.accounts[1].id : widget.accounts.first.id);
       _categoryId = e.categoryId;
       _date = e.occurredAt;
       _amountCtrl.text = (e.amountMinor / 100).toStringAsFixed(2);
       _noteCtrl.text = e.note;
     } else {
-      _type = TxnType.expense;
-      _accountId = widget.accounts.first.id;
+      _kind = TxnKind.expense;
+      _fromAccountId = widget.accounts.first.id;
+      _toAccountId = widget.accounts.length > 1 ? widget.accounts[1].id : widget.accounts.first.id;
       _pickDefaultCategory();
     }
   }
 
   void _pickDefaultCategory() {
-    final filtered = widget.categories.where((c) => c.type == _type).toList();
+    if (_kind == TxnKind.transfer) {
+      _categoryId = null;
+      return;
+    }
+    final want = _kind == TxnKind.income ? CategoryKind.income : CategoryKind.expense;
+    final filtered = widget.categories.where((c) => c.kind == want).toList();
     if (filtered.isNotEmpty) _categoryId = filtered.first.id;
   }
 
@@ -155,8 +200,9 @@ class _AddTxnSheetState extends ConsumerState<_AddTxnSheet> {
 
   @override
   Widget build(BuildContext context) {
-    final filteredCats = widget.categories.where((c) => c.type == _type).toList();
-    if (_categoryId == null && filteredCats.isNotEmpty) _categoryId = filteredCats.first.id;
+    final wantCat =
+        _kind == TxnKind.income ? CategoryKind.income : CategoryKind.expense;
+    final filteredCats = widget.categories.where((c) => c.kind == wantCat).toList();
 
     return Padding(
       padding: EdgeInsets.only(
@@ -170,17 +216,20 @@ class _AddTxnSheetState extends ConsumerState<_AddTxnSheet> {
           crossAxisAlignment: CrossAxisAlignment.stretch,
           mainAxisSize: MainAxisSize.min,
           children: [
-            Text(_isEdit ? 'Edit transaction' : 'Add transaction',
-                style: Theme.of(context).textTheme.titleLarge),
+            Text(
+              _isEdit ? 'Edit transaction' : 'Add transaction',
+              style: Theme.of(context).textTheme.titleLarge,
+            ),
             const SizedBox(height: 16),
-            SegmentedButton<TxnType>(
+            SegmentedButton<TxnKind>(
               segments: const [
-                ButtonSegment(value: TxnType.expense, label: Text('Expense')),
-                ButtonSegment(value: TxnType.income, label: Text('Income')),
+                ButtonSegment(value: TxnKind.expense, label: Text('Expense')),
+                ButtonSegment(value: TxnKind.income, label: Text('Income')),
+                ButtonSegment(value: TxnKind.transfer, label: Text('Transfer')),
               ],
-              selected: {_type},
+              selected: {_kind},
               onSelectionChanged: (s) => setState(() {
-                _type = s.first;
+                _kind = s.first;
                 _pickDefaultCategory();
               }),
             ),
@@ -194,25 +243,51 @@ class _AddTxnSheetState extends ConsumerState<_AddTxnSheet> {
               ),
             ),
             const SizedBox(height: 12),
-            DropdownButtonFormField<String>(
-              initialValue: _accountId,
-              decoration: const InputDecoration(labelText: 'Account'),
-              items: widget.accounts
-                  .map((a) => DropdownMenuItem(value: a.id, child: Text(a.name)))
-                  .toList(),
-              onChanged: (v) => setState(() => _accountId = v!),
-            ),
-            const SizedBox(height: 12),
-            DropdownButtonFormField<String>(
-              initialValue: filteredCats.any((c) => c.id == _categoryId)
-                  ? _categoryId
-                  : (filteredCats.isNotEmpty ? filteredCats.first.id : null),
-              decoration: const InputDecoration(labelText: 'Category'),
-              items: filteredCats
-                  .map((c) => DropdownMenuItem(value: c.id, child: Text(c.name)))
-                  .toList(),
-              onChanged: (v) => setState(() => _categoryId = v),
-            ),
+            if (_kind != TxnKind.income)
+              DropdownButtonFormField<String>(
+                initialValue: _fromAccountId,
+                decoration: InputDecoration(
+                  labelText: _kind == TxnKind.transfer ? 'From account' : 'Account',
+                ),
+                items: widget.accounts
+                    .map((a) => DropdownMenuItem(value: a.id, child: Text(a.name)))
+                    .toList(),
+                onChanged: (v) => setState(() => _fromAccountId = v!),
+              ),
+            if (_kind == TxnKind.transfer) ...[
+              const SizedBox(height: 12),
+              DropdownButtonFormField<String>(
+                initialValue: _toAccountId,
+                decoration: const InputDecoration(labelText: 'To account'),
+                items: widget.accounts
+                    .map((a) => DropdownMenuItem(value: a.id, child: Text(a.name)))
+                    .toList(),
+                onChanged: (v) => setState(() => _toAccountId = v!),
+              ),
+            ],
+            if (_kind == TxnKind.income) ...[
+              DropdownButtonFormField<String>(
+                initialValue: _toAccountId,
+                decoration: const InputDecoration(labelText: 'Account'),
+                items: widget.accounts
+                    .map((a) => DropdownMenuItem(value: a.id, child: Text(a.name)))
+                    .toList(),
+                onChanged: (v) => setState(() => _toAccountId = v!),
+              ),
+            ],
+            if (_kind != TxnKind.transfer) ...[
+              const SizedBox(height: 12),
+              DropdownButtonFormField<String>(
+                initialValue: filteredCats.any((c) => c.id == _categoryId)
+                    ? _categoryId
+                    : (filteredCats.isNotEmpty ? filteredCats.first.id : null),
+                decoration: const InputDecoration(labelText: 'Category'),
+                items: filteredCats
+                    .map((c) => DropdownMenuItem(value: c.id, child: Text(c.name)))
+                    .toList(),
+                onChanged: (v) => setState(() => _categoryId = v),
+              ),
+            ],
             const SizedBox(height: 12),
             TextField(
               controller: _noteCtrl,
@@ -235,53 +310,78 @@ class _AddTxnSheetState extends ConsumerState<_AddTxnSheet> {
             ),
             const SizedBox(height: 16),
             FilledButton(
-              onPressed: () async {
-                final raw = _amountCtrl.text.trim().replaceAll(',', '');
-                final val = double.tryParse(raw);
-                if (val == null || val <= 0) {
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(content: Text('Enter a valid amount > 0')),
-                  );
-                  return;
-                }
-                if (_categoryId == null) {
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(content: Text('Add a category first.')),
-                  );
-                  return;
-                }
-                final minor = (val * 100).round();
-                final repo = ref.read(transactionsRepositoryProvider);
-                if (_isEdit) {
-                  await repo.update(
-                    id: widget.existing!.id,
-                    type: _type,
-                    amountMinor: minor,
-                    accountId: _accountId,
-                    categoryId: _categoryId!,
-                    occurredAt: _date,
-                    note: _noteCtrl.text.trim(),
-                  );
-                } else {
-                  await repo.add(
-                    type: _type,
-                    amountMinor: minor,
-                    accountId: _accountId,
-                    categoryId: _categoryId!,
-                    occurredAt: _date,
-                    note: _noteCtrl.text.trim(),
-                  );
-                }
-                ref.invalidate(monthSummaryProvider);
-                ref.invalidate(totalBalanceProvider);
-                ref.invalidate(recentTransactionsProvider);
-                if (context.mounted) Navigator.pop(context);
-              },
+              onPressed: () => _save(context, ref),
               child: Text(_isEdit ? 'Update' : 'Save'),
             ),
           ],
         ),
       ),
     );
+  }
+
+  Future<void> _save(BuildContext context, WidgetRef ref) async {
+    final raw = _amountCtrl.text.trim().replaceAll(',', '');
+    final val = double.tryParse(raw);
+    if (val == null || val <= 0) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Enter a valid amount > 0')),
+      );
+      return;
+    }
+    if (_kind == TxnKind.transfer) {
+      if (_fromAccountId == _toAccountId) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Transfer accounts must differ')),
+        );
+        return;
+      }
+    }
+
+    String? effectiveCategory;
+    if (_kind != TxnKind.transfer) {
+      final want =
+          _kind == TxnKind.income ? CategoryKind.income : CategoryKind.expense;
+      final options = widget.categories.where((c) => c.kind == want).toList();
+      effectiveCategory = options.any((c) => c.id == _categoryId)
+          ? _categoryId
+          : (options.isNotEmpty ? options.first.id : null);
+      if (effectiveCategory == null) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Add a category first.')),
+        );
+        return;
+      }
+    }
+
+    final minor = (val * 100).round();
+    final repo = ref.read(transactionsRepositoryProvider);
+    final note = _noteCtrl.text.trim();
+
+    if (_isEdit) {
+      await repo.update(
+        id: widget.existing!.id,
+        kind: _kind,
+        amountMinor: minor,
+        fromAccountId: _kind == TxnKind.income ? null : _fromAccountId,
+        toAccountId: _kind == TxnKind.expense ? null : _toAccountId,
+        categoryId: effectiveCategory,
+        occurredAt: _date,
+        note: note,
+      );
+    } else {
+      await repo.add(
+        kind: _kind,
+        amountMinor: minor,
+        fromAccountId: _kind == TxnKind.income ? null : _fromAccountId,
+        toAccountId: _kind == TxnKind.expense ? null : _toAccountId,
+        categoryId: effectiveCategory,
+        occurredAt: _date,
+        note: note,
+      );
+    }
+    ref.invalidate(monthSummaryProvider);
+    ref.invalidate(totalBalanceProvider);
+    ref.invalidate(recentTransactionsProvider);
+    if (context.mounted) Navigator.pop(context);
   }
 }
