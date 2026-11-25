@@ -78,6 +78,9 @@ mod tests {
             validate_tx(TxnKind::Transfer, 100, Some(1), Some(1)),
             Err(CoreError::InvalidTransfer)
         );
-        assert_eq!(validate_tx(TxnKind::Transfer, 100, Some(1), Some(2)), Ok(()));
+        assert_eq!(
+            validate_tx(TxnKind::Transfer, 100, Some(1), Some(2)),
+            Ok(())
+        );
     }
 }

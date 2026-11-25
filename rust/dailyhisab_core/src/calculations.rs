@@ -10,7 +10,7 @@ pub fn format_bdt_minor(amount_minor: i64) -> String {
     let major = abs / 100;
     let minor = abs % 100;
     let sign = if negative { "-" } else { "" };
-    format!("{}৳{}.{}", sign, major, format!("{:02}", minor))
+    format!("{}৳{}.{:02}", sign, major, minor)
 }
 
 pub fn validate_minor_amount(amount_minor: i64) -> Result<(), CoreError> {
