@@ -25,7 +25,8 @@ void main() {
   });
 
   test('income increases, expense decreases account balance', () async {
-    await accounts.create(name: 'Cash', kind: AccountKind.cash, openingBalanceMinor: 100000);
+    await accounts.create(
+        name: 'Cash', kind: AccountKind.cash, openingBalanceMinor: 100000);
     final account = (await accounts.getAll()).first;
 
     await categories.seedDefaultsIfEmpty();
@@ -75,7 +76,8 @@ void main() {
   });
 
   test('soft delete hides a transaction from reads and balances', () async {
-    await accounts.create(name: 'Cash', kind: AccountKind.cash, openingBalanceMinor: 0);
+    await accounts.create(
+        name: 'Cash', kind: AccountKind.cash, openingBalanceMinor: 0);
     final account = (await accounts.getAll()).first;
     await categories.seedDefaultsIfEmpty();
     final cats = await categories.getAll();
