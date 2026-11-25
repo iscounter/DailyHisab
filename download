@@ -1,0 +1,25 @@
+# Flutter/Dart
+apps/mobile/.dart_tool/
+apps/mobile/.packages
+apps/mobile/.pub-cache/
+apps/mobile/build/
+apps/mobile/.flutter-plugins
+apps/mobile/.flutter-plugins-dependencies
+apps/mobile/ios/Pods/
+apps/mobile/android/.gradle/
+apps/mobile/android/app/build/
+apps/mobile/*.iml
+*.g.dart
+*.freezed.dart
+
+# Rust
+rust/dailyhisab_core/target/
+
+# IDE
+.vscode/
+.idea/
+*.swp
+.DS_Store
+
+# NOTE: pubspec.lock and Cargo.lock are intentionally committed
+# (reproducible builds, see PROJECT_ARCHITECTURE.md 2.1).
