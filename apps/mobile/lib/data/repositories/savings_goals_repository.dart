@@ -13,9 +13,9 @@ class SavingsGoalsRepository {
         ..orderBy([(t) => OrderingTerm.asc(t.createdAt)]))
       .watch();
 
-  Future<List<SavingsGoal>> getAll() =>
-      (_db.select(_db.savingsGoals)..orderBy([(t) => OrderingTerm.asc(t.createdAt)]))
-          .get();
+  Future<List<SavingsGoal>> getAll() => (_db.select(_db.savingsGoals)
+        ..orderBy([(t) => OrderingTerm.asc(t.createdAt)]))
+      .get();
 
   Future<void> create({required String name, required int targetMinor}) async {
     await _db.into(_db.savingsGoals).insert(SavingsGoalsCompanion.insert(

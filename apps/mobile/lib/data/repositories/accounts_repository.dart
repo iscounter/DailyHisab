@@ -14,10 +14,21 @@ class AccountsRepository {
         ..orderBy([(t) => OrderingTerm.asc(t.name)]))
       .watch();
 
+  Stream<List<Account>> watchArchived() => (_db.select(_db.accounts)
+        ..where((t) => t.isArchived.equals(true))
+        ..orderBy([(t) => OrderingTerm.asc(t.name)]))
+      .watch();
+
   Future<List<Account>> getAll() => (_db.select(_db.accounts)
         ..where((t) => t.isArchived.equals(false))
         ..orderBy([(t) => OrderingTerm.asc(t.name)]))
       .get();
+
+  /// Every account, including archived ones. Archived accounts still hold
+  /// money and history, so balances and net worth must include them.
+  Future<List<Account>> getAllIncludingArchived() =>
+      (_db.select(_db.accounts)..orderBy([(t) => OrderingTerm.asc(t.name)]))
+          .get();
 
   Future<void> create({
     required String name,
@@ -33,10 +44,11 @@ class AccountsRepository {
         ));
   }
 
+  /// Sum of opening balances over ALL accounts (archived included): an
+  /// archived account's money still belongs to the user's net worth.
   Future<int> sumOpeningBalanceMinor() async {
     final q = await (_db.selectOnly(_db.accounts)
-          ..addColumns([_db.accounts.openingBalanceMinor.sum()])
-          ..where(_db.accounts.isArchived.equals(false)))
+          ..addColumns([_db.accounts.openingBalanceMinor.sum()]))
         .getSingle();
     return q.read(_db.accounts.openingBalanceMinor.sum()) ?? 0;
   }
@@ -44,6 +56,12 @@ class AccountsRepository {
   Future<void> archive(String id) async {
     await (_db.update(_db.accounts)..where((t) => t.id.equals(id))).write(
       const AccountsCompanion(isArchived: Value(true)),
+    );
+  }
+
+  Future<void> unarchive(String id) async {
+    await (_db.update(_db.accounts)..where((t) => t.id.equals(id))).write(
+      const AccountsCompanion(isArchived: Value(false)),
     );
   }
 }

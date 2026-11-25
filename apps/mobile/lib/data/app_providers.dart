@@ -7,6 +7,7 @@ import '../data/repositories/categories_repository.dart';
 import '../data/repositories/transactions_repository.dart';
 import '../data/repositories/app_settings_repository.dart';
 import '../data/repositories/savings_goals_repository.dart';
+import '../data/repositories/backup_repository.dart';
 
 final accountsRepositoryProvider = Provider<AccountsRepository>((ref) {
   return AccountsRepository(ref.watch(databaseProvider));
@@ -45,7 +46,8 @@ MonthRange currentMonthRange() {
   return MonthRange(from, to);
 }
 
-final monthSummaryProvider = FutureProvider<({int incomeMinor, int expenseMinor})>((ref) async {
+final monthSummaryProvider =
+    FutureProvider<({int incomeMinor, int expenseMinor})>((ref) async {
   final repo = ref.watch(transactionsRepositoryProvider);
   final r = currentMonthRange();
   final income = await repo.sumIncomeMinor(r.from, r.to);
@@ -83,11 +85,21 @@ final savingsGoalsProvider = StreamProvider<List<SavingsGoal>>((ref) {
   return ref.watch(savingsGoalsRepositoryProvider).watchAll();
 });
 
+final backupRepositoryProvider = Provider<BackupRepository>((ref) {
+  return BackupRepository(ref.watch(databaseProvider));
+});
+
+/// Accounts that are archived (hidden from lists, still part of net worth).
+final archivedAccountsStreamProvider = StreamProvider<List<Account>>((ref) {
+  return ref.watch(accountsRepositoryProvider).watchArchived();
+});
+
 /// Map of accountId -> current balance (opening + posted transactions).
+/// Includes archived accounts so their internal transfers are not lost.
 final accountBalancesProvider = FutureProvider<Map<String, int>>((ref) async {
   final accRepo = ref.watch(accountsRepositoryProvider);
   final txnRepo = ref.watch(transactionsRepositoryProvider);
-  final accounts = await accRepo.getAll();
+  final accounts = await accRepo.getAllIncludingArchived();
   return txnRepo.balancesByAccount(accounts);
 });
 
@@ -127,7 +139,9 @@ final monthExpenseByCategoryProvider =
   final list = totals.entries.map((e) {
     return (
       categoryId: e.key,
-      name: e.key == '__none__' ? 'Uncategorized' : (catName[e.key] ?? 'Uncategorized'),
+      name: e.key == '__none__'
+          ? 'Uncategorized'
+          : (catName[e.key] ?? 'Uncategorized'),
       totalMinor: e.value,
     );
   }).toList();

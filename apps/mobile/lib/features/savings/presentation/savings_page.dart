@@ -1,30 +1,32 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../../core/utils/money.dart';
+import '../../../core/widgets/state_views.dart';
 import '../../../data/app_providers.dart';
 import '../../../data/drift/app_database.dart';
-import '../../../core/utils/money.dart';
+import '../../../l10n/generated/app_localizations.dart';
 
 class SavingsPage extends ConsumerWidget {
   const SavingsPage({super.key});
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    final t = AppLocalizations.of(context)!;
     final goals = ref.watch(savingsGoalsProvider);
     return Scaffold(
-      appBar: AppBar(title: const Text('Savings Goals')),
+      appBar: AppBar(title: Text(t.savingsTitle)),
       floatingActionButton: FloatingActionButton(
+        heroTag: 'savings-add',
         onPressed: () => _addGoal(context, ref),
         child: const Icon(Icons.add),
       ),
       body: goals.when(
         data: (list) {
           if (list.isEmpty) {
-            return const Center(
-              child: Padding(
-                padding: EdgeInsets.all(24),
-                child: Text('No savings goals yet. Tap + to create one.'),
-              ),
+            return EmptyStateView(
+              icon: Icons.savings_outlined,
+              message: t.noSavingsGoals,
             );
           }
           return ListView.separated(
@@ -46,10 +48,14 @@ class SavingsPage extends ConsumerWidget {
                       Row(
                         children: [
                           Expanded(
-                            child: Text(g.name,
-                                style: const TextStyle(fontWeight: FontWeight.w600)),
+                            child: Text(
+                              g.name,
+                              style:
+                                  const TextStyle(fontWeight: FontWeight.w600),
+                            ),
                           ),
                           IconButton(
+                            tooltip: t.deleteLabel,
                             icon: const Icon(Icons.delete_outline),
                             onPressed: () async {
                               await ref
@@ -59,15 +65,27 @@ class SavingsPage extends ConsumerWidget {
                           ),
                         ],
                       ),
-                      Text('${formatBdtMinor(g.savedMinor)} of ${formatBdtMinor(g.targetMinor)}'),
+                      Text(
+                        t.goalProgress(
+                          formatBdtMinor(g.savedMinor),
+                          formatBdtMinor(g.targetMinor),
+                        ),
+                      ),
                       const SizedBox(height: 8),
-                      ClipRRect(
-                        borderRadius: BorderRadius.circular(8),
-                        child: LinearProgressIndicator(
-                          value: ratio,
-                          minHeight: 8,
-                          backgroundColor:
-                              Theme.of(context).colorScheme.surfaceContainerHighest,
+                      StatusSemantic(
+                        label: t.goalProgress(
+                          formatBdtMinor(g.savedMinor),
+                          formatBdtMinor(g.targetMinor),
+                        ),
+                        child: ClipRRect(
+                          borderRadius: BorderRadius.circular(8),
+                          child: LinearProgressIndicator(
+                            value: ratio.toDouble(),
+                            minHeight: 8,
+                            backgroundColor: Theme.of(context)
+                                .colorScheme
+                                .surfaceContainerHighest,
+                          ),
                         ),
                       ),
                       const SizedBox(height: 8),
@@ -75,13 +93,18 @@ class SavingsPage extends ConsumerWidget {
                         mainAxisAlignment: MainAxisAlignment.end,
                         children: [
                           if (done) ...[
-                            const Icon(Icons.check_circle, color: Colors.teal, size: 20),
+                            const Icon(Icons.check_circle,
+                                color: Colors.teal, size: 20),
                             const SizedBox(width: 8),
+                            Text(
+                              t.goalReached,
+                              style: const TextStyle(color: Colors.teal),
+                            ),
                           ],
                           TextButton.icon(
                             onPressed: () => _addMoney(context, ref, g),
                             icon: const Icon(Icons.add, size: 18),
-                            label: const Text('Add money'),
+                            label: Text(t.addMoney),
                           ),
                         ],
                       ),
@@ -93,37 +116,39 @@ class SavingsPage extends ConsumerWidget {
           );
         },
         loading: () => const Center(child: CircularProgressIndicator()),
-        error: (e, _) => Center(child: Text('Error: $e')),
+        error: (e, _) => ErrorStateView(details: e.toString()),
       ),
     );
   }
 
   Future<void> _addGoal(BuildContext context, WidgetRef ref) async {
+    final t = AppLocalizations.of(context)!;
     final nameCtrl = TextEditingController();
     final targetCtrl = TextEditingController();
     await showDialog<void>(
       context: context,
       builder: (ctx) {
         return AlertDialog(
-          title: const Text('New savings goal'),
+          title: Text(t.newGoalTitle),
           content: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
               TextField(
                 controller: nameCtrl,
-                decoration: const InputDecoration(labelText: 'Name'),
+                decoration: InputDecoration(labelText: t.goalNameLabel),
               ),
               TextField(
                 controller: targetCtrl,
-                keyboardType: const TextInputType.numberWithOptions(decimal: true),
-                decoration: const InputDecoration(labelText: 'Target (BDT)'),
+                keyboardType:
+                    const TextInputType.numberWithOptions(decimal: true),
+                decoration: InputDecoration(labelText: t.targetLabel),
               ),
             ],
           ),
           actions: [
             TextButton(
               onPressed: () => Navigator.pop(ctx),
-              child: const Text('Cancel'),
+              child: Text(t.cancelLabel),
             ),
             FilledButton(
               onPressed: () async {
@@ -131,7 +156,7 @@ class SavingsPage extends ConsumerWidget {
                 final target = parseBdtToMinor(targetCtrl.text);
                 if (name.isEmpty || target == null || target <= 0) {
                   ScaffoldMessenger.of(ctx).showSnackBar(
-                    const SnackBar(content: Text('Enter a name and valid target')),
+                    SnackBar(content: Text(t.enterValidGoal)),
                   );
                   return;
                 }
@@ -140,7 +165,7 @@ class SavingsPage extends ConsumerWidget {
                     .create(name: name, targetMinor: target);
                 if (ctx.mounted) Navigator.pop(ctx);
               },
-              child: const Text('Save'),
+              child: Text(t.saveLabel),
             ),
           ],
         );
@@ -150,29 +175,31 @@ class SavingsPage extends ConsumerWidget {
     targetCtrl.dispose();
   }
 
-  Future<void> _addMoney(BuildContext context, WidgetRef ref, SavingsGoal goal) async {
+  Future<void> _addMoney(
+      BuildContext context, WidgetRef ref, SavingsGoal goal) async {
+    final t = AppLocalizations.of(context)!;
     final ctrl = TextEditingController();
     await showDialog<void>(
       context: context,
       builder: (ctx) {
         return AlertDialog(
-          title: const Text('Add to savings'),
+          title: Text(t.addToSavingsTitle),
           content: TextField(
             controller: ctrl,
             keyboardType: const TextInputType.numberWithOptions(decimal: true),
-            decoration: const InputDecoration(labelText: 'Amount (BDT)'),
+            decoration: InputDecoration(labelText: t.amountLabel),
           ),
           actions: [
             TextButton(
               onPressed: () => Navigator.pop(ctx),
-              child: const Text('Cancel'),
+              child: Text(t.cancelLabel),
             ),
             FilledButton(
               onPressed: () async {
                 final amount = parseBdtToMinor(ctrl.text);
                 if (amount == null || amount <= 0) {
                   ScaffoldMessenger.of(ctx).showSnackBar(
-                    const SnackBar(content: Text('Enter a valid amount > 0')),
+                    SnackBar(content: Text(t.invalidAmount)),
                   );
                   return;
                 }
@@ -181,7 +208,7 @@ class SavingsPage extends ConsumerWidget {
                     .addToSaved(goal.id, amount);
                 if (ctx.mounted) Navigator.pop(ctx);
               },
-              child: const Text('Add'),
+              child: Text(t.addLabel),
             ),
           ],
         );

@@ -76,10 +76,9 @@ class TransactionsRepository {
   Future<int> sumIncomeMinor(DateTime from, DateTime to) async {
     final q = await (_db.selectOnly(_db.transactions)
           ..addColumns([_db.transactions.amountMinor.sum()])
-          ..where(
-              _db.transactions.kind.equalsValue(TxnKind.income) &
-                  _db.transactions.deletedAt.isNull() &
-                  _db.transactions.occurredAt.isBetweenValues(from, to)))
+          ..where(_db.transactions.kind.equalsValue(TxnKind.income) &
+              _db.transactions.deletedAt.isNull() &
+              _db.transactions.occurredAt.isBetweenValues(from, to)))
         .getSingle();
     return q.read(_db.transactions.amountMinor.sum()) ?? 0;
   }
@@ -87,10 +86,9 @@ class TransactionsRepository {
   Future<int> sumExpenseMinor(DateTime from, DateTime to) async {
     final q = await (_db.selectOnly(_db.transactions)
           ..addColumns([_db.transactions.amountMinor.sum()])
-          ..where(
-              _db.transactions.kind.equalsValue(TxnKind.expense) &
-                  _db.transactions.deletedAt.isNull() &
-                  _db.transactions.occurredAt.isBetweenValues(from, to)))
+          ..where(_db.transactions.kind.equalsValue(TxnKind.expense) &
+              _db.transactions.deletedAt.isNull() &
+              _db.transactions.occurredAt.isBetweenValues(from, to)))
         .getSingle();
     return q.read(_db.transactions.amountMinor.sum()) ?? 0;
   }
@@ -180,5 +178,25 @@ class TransactionsRepository {
     await (_db.update(_db.transactions)..where((t) => t.id.equals(id))).write(
       TransactionsCompanion(deletedAt: Value(DateTime.now())),
     );
+  }
+
+  /// Undo a soft delete (used by the snackbar "Undo" action).
+  Future<void> restore(String id) async {
+    await (_db.update(_db.transactions)..where((t) => t.id.equals(id))).write(
+      const TransactionsCompanion(deletedAt: Value(null)),
+    );
+  }
+
+  /// Expenses for one category in [from, to). Used by per-category budgets.
+  Future<int> sumExpenseMinorByCategory(
+      DateTime from, DateTime to, String categoryId) async {
+    final q = await (_db.selectOnly(_db.transactions)
+          ..addColumns([_db.transactions.amountMinor.sum()])
+          ..where(_db.transactions.kind.equalsValue(TxnKind.expense) &
+              _db.transactions.deletedAt.isNull() &
+              _db.transactions.categoryId.equals(categoryId) &
+              _db.transactions.occurredAt.isBetweenValues(from, to)))
+        .getSingle();
+    return q.read(_db.transactions.amountMinor.sum()) ?? 0;
   }
 }
