@@ -6,7 +6,7 @@
 ![Dart](https://img.shields.io/badge/Language-Dart-0175C2?logo=dart&logoColor=white)
 ![Rust](https://img.shields.io/badge/Core-Rust-000000?logo=rust&logoColor=white)
 ![SQLite](https://img.shields.io/badge/Storage-SQLite-003B57?logo=sqlite&logoColor=white)
-![Status](https://img.shields.io/badge/Status-v1%20feature%20complete%20(analyze%2Ftests%20green)-success)
+![Status](https://img.shields.io/badge/Status-Planning%20%2F%20MVP%20Foundation-orange)
 
 ## 1. Product vision
 
@@ -60,14 +60,7 @@ Use the latest mutually compatible **stable** package versions when implementati
 
 ### Planned after the first stable release
 
-Recurring transactions, debt/loan tracking, richer charts, PDF export, biometric app lock, encrypted backup, and cloud synchronization. Treat these as separate milestones rather than blocking the first usable release.
-
-## Verification status (2026-11-25)
-
-- Flutter 3.50.1 stable: `flutter analyze` — **no issues**; `flutter test` — **32/32 pass** (unit, repository, backup codec/restore, widget smoke tests).
-- Rust stable (1.100): `cargo test` — **10/10 pass**; `cargo clippy -D warnings` and `cargo fmt --check` clean.
-- Android runner committed (`applicationId com.dailyhisab.app`, adaptive launcher icon).
-- Debug/release APK and AAB builds run in GitHub Actions (`android_debug_apk.yml`, `android_release.yml`); store release still needs signing keys and device QA.
+Savings goals, recurring transactions, debt/loan tracking, richer charts, CSV/PDF export, biometric app lock, encrypted backup, and cloud synchronization. Treat these as separate milestones rather than blocking the first usable release.
 
 ## 4. Architecture at a glance
 

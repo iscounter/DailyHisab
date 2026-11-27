@@ -17,8 +17,7 @@ class Accounts extends Table {
   TextColumn get id => text()();
   TextColumn get name => text()();
   IntColumn get kind => intEnum<AccountKind>()();
-  IntColumn get openingBalanceMinor =>
-      integer().withDefault(const Constant(0))();
+  IntColumn get openingBalanceMinor => integer().withDefault(const Constant(0))();
   TextColumn get currencyCode => text().withDefault(const Constant('BDT'))();
   BoolColumn get isArchived => boolean().withDefault(const Constant(false))();
   DateTimeColumn get createdAt => dateTime()();
@@ -89,16 +88,10 @@ class SavingsGoals extends Table {
   Set<Column> get primaryKey => {id};
 }
 
-@DriftDatabase(tables: [
-  Accounts,
-  Categories,
-  Transactions,
-  Budgets,
-  AppSettings,
-  SavingsGoals
-])
+@DriftDatabase(
+    tables: [Accounts, Categories, Transactions, Budgets, AppSettings, SavingsGoals])
 class AppDatabase extends _$AppDatabase {
-  AppDatabase(super.e);
+  AppDatabase(QueryExecutor e) : super(e);
 
   /// Production constructor backed by the on-device SQLite file.
   AppDatabase.forProduction() : this(_openConnection());

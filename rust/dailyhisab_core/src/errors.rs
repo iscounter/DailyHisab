@@ -1,6 +1,6 @@
 use thiserror::Error;
 
-#[derive(Debug, Error, PartialEq, Eq, Clone)]
+#[derive(Debug, Error)]
 pub enum CoreError {
     #[error("invalid amount")]
     InvalidAmount,

@@ -52,8 +52,6 @@ int? parseBdtToMinor(String input) {
 
   final parts = s.split('.');
   if (parts.length > 2) return null;
-  // A decimal point must be followed by digits ('.', '100.' are invalid).
-  if (parts.length == 2 && parts[1].isEmpty) return null;
 
   final wholeStr = parts[0].isEmpty ? '0' : parts[0];
   final fracStr = parts.length == 2 ? parts[1] : '';
@@ -64,7 +62,7 @@ int? parseBdtToMinor(String input) {
   final whole = int.tryParse(wholeStr);
   if (whole == null) return null;
 
-  final frac = fracStr.isEmpty ? 0 : int.parse('${fracStr}00'.substring(0, 2));
+  final frac = fracStr.isEmpty ? 0 : int.parse((fracStr + '00').substring(0, 2));
 
   var minor = whole * 100 + frac;
   if (negative) minor = -minor;
