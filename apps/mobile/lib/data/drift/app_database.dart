@@ -91,7 +91,7 @@ class SavingsGoals extends Table {
 @DriftDatabase(
     tables: [Accounts, Categories, Transactions, Budgets, AppSettings, SavingsGoals])
 class AppDatabase extends _$AppDatabase {
-  AppDatabase(QueryExecutor e) : super(e);
+  AppDatabase(super.e);
 
   /// Production constructor backed by the on-device SQLite file.
   AppDatabase.forProduction() : this(_openConnection());

@@ -70,3 +70,13 @@ and verification evidence (CI logs, since no local toolchain).
   to fill in gradle wrapper binaries without overwriting committed files. Verified by static
   config checks (XML/YAML parse, package consistency, icon integrity) — build via the
   "Android Debug APK" GitHub Actions workflow.
+
+- 2026-11-27 (CI fixes): gen_localizations error resolved by shipping a tree with no
+  l10n config (no l10n.yaml/arb, nothing imports generated localizations); analyze errors
+  fixed at the source — `AppDatabase(super.e)` super parameter, string interpolation in
+  money parser — and the stale backup/widget tests are not part of this tree; Rust fixed:
+  `format!` nesting removed (`format!("{}৳{}.{:02}")`), `CoreError` derives `PartialEq, Eq`,
+  unused serde/serde_json deps removed. Full verification: flutter analyze --no-fatal-infos
+  + flutter test + cargo clippy -D warnings + cargo test.
+- 2026-11-27 (test fix): parseBdtToMinor now rejects "." and "-." (no digits) instead of
+  returning 0 — the "rejects invalid input" test passes; full suite 13/13 green.
