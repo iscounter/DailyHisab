@@ -25,11 +25,9 @@ jobs:
           channel: stable
           cache: true
 
-      - name: Ensure Android project exists
+      - name: Fill in missing Android template files
         run: |
-          if [ ! -d "android" ]; then
-            flutter create . --org com.dailyhisab.app --project-name dailyhisab --platforms=android
-          fi
+          flutter create . --org com.dailyhisab.app --project-name dailyhisab --platforms=android
 
       - name: Flutter pub get
         run: flutter pub get
